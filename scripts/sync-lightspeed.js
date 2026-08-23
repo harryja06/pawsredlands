@@ -14,6 +14,14 @@
  *   LS_CLIENT_SECRET
  *   LS_REFRESH_TOKEN
  *   LS_ACCOUNT_ID
+ *
+ * NOTE ON API DETAILS:
+ * This API does not support a "sort" parameter (confirmed against a live
+ * account, which rejected it as an unrecognized field). Instead, results
+ * are filtered directly by timeStamp using the API's field-filter syntax:
+ * fieldName=OPERATOR,value (e.g. timeStamp=>,2026-08-21T00:00:00+00:00).
+ * Client-side date/status checks are kept as a safety net in case the
+ * server-side filter doesn't narrow things exactly as expected.
  */
 
 const LS_TOKEN_URL = 'https://cloud.lightspeedapp.com/oauth/access_token.php';
@@ -59,10 +67,16 @@ async function refreshAccessToken() {
   return json.access_token;
 }
 
-async function apiGet(accessToken, accountId, path, searchParams = {}) {
+/**
+ * @param {Array<[string,string]>} paramPairs - array of [key, value] tuples.
+ * Using an array (rather than a plain object) lets the same key (e.g.
+ * "timeStamp") appear more than once, which this API relies on for
+ * expressing a range: one entry for the lower bound, one for the upper.
+ */
+async function apiGet(accessToken, accountId, path, paramPairs = []) {
   const url = new URL(`${LS_API_BASE}/${accountId}/${path}`);
-  for (const [key, value] of Object.entries(searchParams)) {
-    url.searchParams.set(key, value);
+  for (const [key, value] of paramPairs) {
+    url.searchParams.append(key, value);
   }
 
   const res = await fetch(url, {
@@ -73,7 +87,7 @@ async function apiGet(accessToken, accountId, path, searchParams = {}) {
     // Leaky-bucket rate limit hit. Back off and retry once.
     const retryAfter = Number(res.headers.get('Retry-After') || 5);
     await new Promise((r) => setTimeout(r, retryAfter * 1000));
-    return apiGet(accessToken, accountId, path, searchParams);
+    return apiGet(accessToken, accountId, path, paramPairs);
   }
 
   if (!res.ok) {
@@ -85,43 +99,54 @@ async function apiGet(accessToken, accountId, path, searchParams = {}) {
 }
 
 /**
- * Fetches Sale records page by page (newest first) and stops once it has
- * paged past the target date window. This avoids depending on the exact
- * server-side date-range filter syntax and is robust for a once-a-day job.
+ * Fetches Sale records filtered to a single UTC day, using the API's own
+ * timeStamp range filter (rather than relying on sort + early-exit, which
+ * this API doesn't support). Client-side date/status checks stay in place
+ * as a safety net, and a page cap guards against the filter not narrowing
+ * things as expected.
  */
 async function fetchSalesForDate(accessToken, accountId, targetDateStr) {
   const sales = [];
-  let offset = 0;
   const limit = 100;
+  const MAX_PAGES = 20;
+
   const targetStart = new Date(`${targetDateStr}T00:00:00Z`);
-  const targetEnd = new Date(`${targetDateStr}T23:59:59Z`);
+  const targetEnd = new Date(targetStart.getTime() + 24 * 60 * 60 * 1000); // exclusive, next midnight UTC
+  const startFilter = `${targetDateStr}T00:00:00+00:00`;
+  const endFilter = `${targetEnd.toISOString().slice(0, 10)}T00:00:00+00:00`;
 
-  while (true) {
-    const page = await apiGet(accessToken, accountId, 'Sale.json', {
-      sort: '-timeStamp',
-      limit: String(limit),
-      offset: String(offset),
-      load_relations: '["SaleLines","SaleLines.Item"]',
-    });
+  let offset = 0;
+  let page = 0;
 
-    const batch = Array.isArray(page.Sale) ? page.Sale : page.Sale ? [page.Sale] : [];
+  while (page < MAX_PAGES) {
+    const response = await apiGet(accessToken, accountId, 'Sale.json', [
+      ['limit', String(limit)],
+      ['offset', String(offset)],
+      ['load_relations', '["SaleLines","SaleLines.Item"]'],
+      ['timeStamp', `>,${startFilter}`],
+      ['timeStamp', `<,${endFilter}`],
+    ]);
+
+    const batch = Array.isArray(response.Sale) ? response.Sale : response.Sale ? [response.Sale] : [];
     if (batch.length === 0) break;
 
-    let pastWindow = false;
     for (const sale of batch) {
       const saleTime = new Date(sale.timeStamp);
-      if (saleTime > targetEnd) continue; // newer than our window, keep paging
-      if (saleTime < targetStart) {
-        pastWindow = true; // older than our window, we're done
-        break;
-      }
-      if (sale.completed === 'true' || sale.completed === true) {
+      const isCompleted = sale.completed === 'true' || sale.completed === true;
+      if (isCompleted && saleTime >= targetStart && saleTime < targetEnd) {
         sales.push(sale);
       }
     }
 
-    if (pastWindow || batch.length < limit) break;
+    if (batch.length < limit) break;
     offset += limit;
+    page += 1;
+  }
+
+  if (page >= MAX_PAGES) {
+    console.warn(
+      `Stopped after ${MAX_PAGES} pages (${MAX_PAGES * limit} records) — the date filter may not be narrowing results as expected.`
+    );
   }
 
   return sales;
@@ -133,11 +158,11 @@ async function fetchLowStockItems(accessToken, accountId) {
   const limit = 100;
 
   while (true) {
-    const page = await apiGet(accessToken, accountId, 'Item.json', {
-      limit: String(limit),
-      offset: String(offset),
-      load_relations: '["ItemShops"]',
-    });
+    const page = await apiGet(accessToken, accountId, 'Item.json', [
+      ['limit', String(limit)],
+      ['offset', String(offset)],
+      ['load_relations', '["ItemShops"]'],
+    ]);
 
     const batch = Array.isArray(page.Item) ? page.Item : page.Item ? [page.Item] : [];
     if (batch.length === 0) break;

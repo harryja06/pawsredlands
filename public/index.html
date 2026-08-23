@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Daily Sales Report</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1:      #fcfcfb;
+    --page-plane:     #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --gridline:       #e1e0d9;
+    --border:         rgba(11,11,11,0.10);
+    --series-1:       #2a78d6;
+    --series-1-soft:  #cde2fb;
+    --warning:        #fab219;
+    --warning-text:   #7a5200;
+    --warning-bg:     #fff6e0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --surface-1:      #1a1a19;
+      --page-plane:     #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --gridline:       #2c2c2a;
+      --border:         rgba(255,255,255,0.10);
+      --series-1:       #3987e5;
+      --series-1-soft:  rgba(57,135,229,0.18);
+      --warning:        #fab219;
+      --warning-text:   #ffd479;
+      --warning-bg:     rgba(250,178,25,0.12);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page-plane);
+    color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+  header {
+    margin-bottom: 28px;
+  }
+  h1 {
+    font-size: 1.5rem;
+    margin: 0 0 4px;
+  }
+  .meta {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .stat-tile {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .stat-label {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+  }
+  .stat-value {
+    font-size: 2rem;
+    font-weight: 600;
+    font-variant-numeric: proportional-nums;
+  }
+  section {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  section h2 {
+    font-size: 1rem;
+    margin: 0 0 16px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .item-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--gridline);
+  }
+  .item-row:last-child { border-bottom: none; }
+  .item-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .item-bar-track {
+    flex: 0 0 140px;
+    height: 8px;
+    background: var(--series-1-soft);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .item-bar-fill {
+    height: 100%;
+    background: var(--series-1);
+    border-radius: 4px;
+  }
+  .item-value {
+    flex: 0 0 auto;
+    width: 80px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+  }
+  .low-stock-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: var(--warning-bg);
+    margin-bottom: 6px;
+  }
+  .low-stock-row .icon { flex: 0 0 auto; }
+  .low-stock-row .name { flex: 1 1 auto; color: var(--text-primary); }
+  .low-stock-row .qty {
+    flex: 0 0 auto;
+    font-variant-numeric: tabular-nums;
+    color: var(--warning-text);
+    font-weight: 600;
+  }
+  .empty {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+  .error-banner {
+    background: var(--warning-bg);
+    color: var(--warning-text);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Daily Sales Report</h1>
+    <div class="meta" id="meta">Loading…</div>
+  </header>
+
+  <div id="error" style="display:none" class="error-banner"></div>
+
+  <div class="stat-row">
+    <div class="stat-tile">
+      <div class="stat-label">Total revenue</div>
+      <div class="stat-value" id="total-revenue">—</div>
+    </div>
+    <div class="stat-tile">
+      <div class="stat-label">Transactions</div>
+      <div class="stat-value" id="transaction-count">—</div>
+    </div>
+  </div>
+
+  <section>
+    <h2>Top items by revenue</h2>
+    <div id="top-items"><div class="empty">Loading…</div></div>
+  </section>
+
+  <section>
+    <h2>Low stock (&le; threshold)</h2>
+    <div id="low-stock"><div class="empty">Loading…</div></div>
+  </section>
+</main>
+
+<script>
+  async function loadReport() {
+    try {
+      const res = await fetch('data.json', { cache: 'no-store' });
+      if (!res.ok) throw new Error('data.json request failed: ' + res.status);
+      const data = await res.json();
+      render(data);
+    } catch (err) {
+      document.getElementById('error').style.display = 'block';
+      document.getElementById('error').textContent =
+        'Could not load the latest report data. It may not have run yet, or the daily sync job failed. (' + err.message + ')';
+      document.getElementById('meta').textContent = '';
+    }
+  }
+
+  function formatCurrency(n) {
+    return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(n || 0);
+  }
+
+  function render(data) {
+    const reportDate = data.reportDate || '—';
+    const generatedAt = data.generatedAt ? new Date(data.generatedAt).toLocaleString() : '—';
+    document.getElementById('meta').textContent =
+      `Report for ${reportDate} · last updated ${generatedAt}`;
+
+    document.getElementById('total-revenue').textContent = formatCurrency(data.totalRevenue);
+    document.getElementById('transaction-count').textContent =
+      new Intl.NumberFormat().format(data.transactionCount || 0);
+
+    const topItems = Array.isArray(data.topItems) ? data.topItems : [];
+    const topItemsEl = document.getElementById('top-items');
+    if (topItems.length === 0) {
+      topItemsEl.innerHTML = '<div class="empty">No sales recorded.</div>';
+    } else {
+      const maxRevenue = Math.max(...topItems.map((i) => i.revenue));
+      topItemsEl.innerHTML = topItems.map((item) => {
+        const pct = maxRevenue > 0 ? Math.round((item.revenue / maxRevenue) * 100) : 0;
+        return `
+          <div class="item-row">
+            <div class="item-name">${escapeHtml(item.name)}</div>
+            <div class="item-bar-track"><div class="item-bar-fill" style="width:${pct}%"></div></div>
+            <div class="item-value">${formatCurrency(item.revenue)}</div>
+          </div>`;
+      }).join('');
+    }
+
+    const lowStock = Array.isArray(data.lowStockItems) ? data.lowStockItems : [];
+    const lowStockEl = document.getElementById('low-stock');
+    if (lowStock.length === 0) {
+      lowStockEl.innerHTML = '<div class="empty">Nothing below the threshold.</div>';
+    } else {
+      lowStockEl.innerHTML = lowStock.map((item) => `
+        <div class="low-stock-row">
+          <span class="icon">&#9888;&#65039;</span>
+          <span class="name">${escapeHtml(item.description || item.sku || 'Unknown item')}</span>
+          <span class="qty">${item.quantityOnHand} left</span>
+        </div>`).join('');
+    }
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = String(str ?? '');
+    return div.innerHTML;
+  }
+
+  loadReport();
+</script>
+</body>
+</html>

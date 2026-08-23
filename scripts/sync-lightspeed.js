@@ -15,13 +15,14 @@
  *   LS_REFRESH_TOKEN
  *   LS_ACCOUNT_ID
  *
- * NOTE ON API DETAILS:
- * This API does not support a "sort" parameter (confirmed against a live
- * account, which rejected it as an unrecognized field). Instead, results
- * are filtered directly by timeStamp using the API's field-filter syntax:
- * fieldName=OPERATOR,value (e.g. timeStamp=>,2026-08-21T00:00:00+00:00).
- * Client-side date/status checks are kept as a safety net in case the
- * server-side filter doesn't narrow things exactly as expected.
+ * NOTE ON API DETAILS (confirmed against a live account):
+ * This API does not support a "sort" parameter, and it silently ignores
+ * timeStamp range-filter query params too — it just returns records
+ * oldest-first from the very beginning of the account's history. So
+ * fetchSalesForDate() below reads the total record count the API DOES
+ * report correctly, jumps near the end via a large "offset", and walks
+ * backward until it's covered the whole target day. See that function's
+ * own comment for details.
  */
 
 const LS_TOKEN_URL = 'https://cloud.lightspeedapp.com/oauth/access_token.php';
@@ -68,10 +69,9 @@ async function refreshAccessToken() {
 }
 
 /**
- * @param {Array<[string,string]>} paramPairs - array of [key, value] tuples.
- * Using an array (rather than a plain object) lets the same key (e.g.
- * "timeStamp") appear more than once, which this API relies on for
- * expressing a range: one entry for the lower bound, one for the upper.
+ * @param {Array<[string,string]>} paramPairs - array of [key, value] tuples
+ * (rather than a plain object) so query params could repeat a key if ever
+ * needed.
  */
 async function apiGet(accessToken, accountId, path, paramPairs = []) {
   const url = new URL(`${LS_API_BASE}/${accountId}/${path}`);
@@ -99,53 +99,79 @@ async function apiGet(accessToken, accountId, path, paramPairs = []) {
 }
 
 /**
- * Fetches Sale records filtered to a single UTC day, using the API's own
- * timeStamp range filter (rather than relying on sort + early-exit, which
- * this API doesn't support). Client-side date/status checks stay in place
- * as a safety net, and a page cap guards against the filter not narrowing
- * things as expected.
+ * Fetches Sale records for a single UTC day.
+ *
+ * CONFIRMED (against a live account, ~464k total sales dating to 2012):
+ * this API silently ignores timeStamp range-filter query params — it just
+ * returns records oldest-first from the very beginning, regardless of any
+ * filter passed. So instead of filtering server-side, this reads the
+ * "@attributes.count" total the API DOES report correctly, jumps near the
+ * end of that ordered list via a large "offset", and walks backward in
+ * chunks until it's gone far enough to cover the whole target day.
  */
 async function fetchSalesForDate(accessToken, accountId, targetDateStr) {
-  const sales = [];
   const limit = 100;
-  const MAX_PAGES = 20;
+  const MAX_CHUNKS = 30; // safety cap: ~3000 of the most recent sales
 
   const targetStart = new Date(`${targetDateStr}T00:00:00Z`);
   const targetEnd = new Date(targetStart.getTime() + 24 * 60 * 60 * 1000); // exclusive, next midnight UTC
-  const startFilter = `${targetDateStr}T00:00:00+00:00`;
-  const endFilter = `${targetEnd.toISOString().slice(0, 10)}T00:00:00+00:00`;
 
-  let offset = 0;
-  let page = 0;
+  // Hard floor: never walk back further than 5 years before the target
+  // day, no matter what. In normal operation this is never actually hit —
+  // "yesterday" is always right at the end of the data — it's just a
+  // guardrail against ever accidentally scanning deep/old history.
+  const earliestAllowed = new Date(targetStart);
+  earliestAllowed.setUTCFullYear(earliestAllowed.getUTCFullYear() - 5);
 
-  while (page < MAX_PAGES) {
-    const response = await apiGet(accessToken, accountId, 'Sale.json', [
+  const countProbe = await apiGet(accessToken, accountId, 'Sale.json', [
+    ['limit', '1'],
+    ['offset', '0'],
+  ]);
+  const totalCount = Number(countProbe['@attributes']?.count || 0);
+
+  const sales = [];
+  let cursor = totalCount;
+  let chunksFetched = 0;
+  let hitFiveYearFloor = false;
+
+  while (cursor > 0 && chunksFetched < MAX_CHUNKS) {
+    const offset = Math.max(0, cursor - limit);
+    const page = await apiGet(accessToken, accountId, 'Sale.json', [
       ['limit', String(limit)],
       ['offset', String(offset)],
       ['load_relations', '["SaleLines","SaleLines.Item"]'],
-      ['timeStamp', `>,${startFilter}`],
-      ['timeStamp', `<,${endFilter}`],
     ]);
 
-    const batch = Array.isArray(response.Sale) ? response.Sale : response.Sale ? [response.Sale] : [];
-    if (batch.length === 0) break;
+    const batch = Array.isArray(page.Sale) ? page.Sale : page.Sale ? [page.Sale] : [];
+    chunksFetched += 1;
 
+    let oldestInBatch = null;
     for (const sale of batch) {
       const saleTime = new Date(sale.timeStamp);
+      if (oldestInBatch === null || saleTime < oldestInBatch) oldestInBatch = saleTime;
+
       const isCompleted = sale.completed === 'true' || sale.completed === true;
       if (isCompleted && saleTime >= targetStart && saleTime < targetEnd) {
         sales.push(sale);
       }
     }
 
-    if (batch.length < limit) break;
-    offset += limit;
-    page += 1;
+    if (offset === 0) break; // reached the very beginning of all sales
+    if (oldestInBatch && oldestInBatch < targetStart) break; // gone back far enough
+    if (oldestInBatch && oldestInBatch < earliestAllowed) {
+      hitFiveYearFloor = true;
+      break; // refuse to walk back further than 5 years, no matter what
+    }
+
+    cursor = offset;
   }
 
-  if (page >= MAX_PAGES) {
+  if (chunksFetched >= MAX_CHUNKS) {
+    console.warn(`Stopped after ${MAX_CHUNKS} chunks — yesterday's sales may need a larger search window.`);
+  }
+  if (hitFiveYearFloor) {
     console.warn(
-      `Stopped after ${MAX_PAGES} pages (${MAX_PAGES * limit} records) — the date filter may not be narrowing results as expected.`
+      `Stopped at the 5-year lookback floor (${earliestAllowed.toISOString().slice(0, 10)}) without confirming the full target day was covered.`
     );
   }
 

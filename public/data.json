@@ -1,28 +1,28 @@
 {
-  "generatedAt": "2026-08-23T07:59:48.123Z",
-  "reportDate": "2026-08-22",
-  "totalRevenue": 7205.57,
-  "transactionCount": 112,
+  "generatedAt": "2026-08-24T09:31:38.722Z",
+  "reportDate": "2026-08-23",
+  "totalRevenue": 6994.33,
+  "transactionCount": 96,
   "topItems": [
     {
-      "name": "Dr. Marty Nature's Blend RADIANT SELECT 80z",
-      "revenue": 157.68
+      "name": "A PUP ABOVE Turkey Pawella 7#",
+      "revenue": 171.8
     },
     {
-      "name": "Nulo Freestyle Dog Trout SENIOR 24#",
-      "revenue": 152.88
+      "name": "MPF DRY VENTURE LID POLLOCK25#",
+      "revenue": 163.1
     },
     {
-      "name": "RAWZ - Cat Food Chicken & Turkey 7.8#",
-      "revenue": 134.83
+      "name": "Dr. Marty Nature's Blend SMALL BREED 80z",
+      "revenue": 155.5
     },
     {
-      "name": "Tucker's Frozen Raw C=6 Beef & Pumpkin Complete 20# BULK",
-      "revenue": 133.75
+      "name": "Primal Raw Frozen Dog Food Beef 3#",
+      "revenue": 143.82
     },
     {
-      "name": "Small Batch - Turkey Batch BULK PATTIES - .5# - 36 count",
-      "revenue": 133.75
+      "name": "Taste of The Wild - PREY Angus Beef 25#",
+      "revenue": 143.53
     }
   ],
   "lowStockItems": [
@@ -677,6 +677,11 @@
       "quantityOnHand": 0
     },
     {
+      "description": "Primal Raw Frozen Dog Food Beef 3#",
+      "sku": "P-9410",
+      "quantityOnHand": 2
+    },
+    {
       "description": "Primal Raw Frozen Dog Food Duck 3#",
       "sku": "P-9414",
       "quantityOnHand": 0
@@ -694,7 +699,7 @@
     {
       "description": "Primal Raw Frozen Dog Food Rabbit 3#",
       "sku": "P-9422",
-      "quantityOnHand": -4
+      "quantityOnHand": 0
     },
     {
       "description": "Primal Raw Frozen Cat Food Duck 3#",
@@ -784,6 +789,11 @@
     {
       "description": "Weruva BFF Pouches - 3z CASE Cat Tuna & Beef Baby Cakes",
       "sku": "P-12154",
+      "quantityOnHand": 4
+    },
+    {
+      "description": "Nature's Logic Pet Food Sardine for Dogs 13#",
+      "sku": "P-27891",
       "quantityOnHand": 4
     },
     {
@@ -1032,6 +1042,11 @@
       "quantityOnHand": 2
     },
     {
+      "description": "Earth Animal No-Hide Chicken Chews 4\" - 2 pack",
+      "sku": "P-19107",
+      "quantityOnHand": 4
+    },
+    {
       "description": "Earth Animal No-Hide Chicken Chews 7\"",
       "sku": "P-18562",
       "quantityOnHand": 0
@@ -1099,7 +1114,7 @@
     {
       "description": "ACANA Heritage 25 Free-Run Poultry 13#",
       "sku": "P-19419",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "Earth Animal No-Hide Beef Chews 7\"",
@@ -1309,11 +1324,16 @@
     {
       "description": "Sa-Shi Cat Food Bonito & Sea Bream 1.76z - CASE",
       "sku": "P-21748",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "Sa-Shi Cat Food Bonito & Sardines 1.76z - CASE",
       "sku": "P-21747",
+      "quantityOnHand": 4
+    },
+    {
+      "description": "Sa-Shi Cat Food Bonito & Pumpkin 1.76z - POUCH",
+      "sku": "P-21741",
       "quantityOnHand": 4
     },
     {
@@ -1334,7 +1354,7 @@
     {
       "description": "Sa-Shi Cat Food Wild Caught Salmon & Bonito 1.76z - POUCH",
       "sku": "P-21739",
-      "quantityOnHand": 4
+      "quantityOnHand": 0
     },
     {
       "description": "RAWZ - Cat Food Chicken & Turkey 1.75#",
@@ -1344,6 +1364,11 @@
     {
       "description": "Sa-Shi Cat Food Bonito & Mackerel 1.76z - CASE",
       "sku": "P-21745",
+      "quantityOnHand": 4
+    },
+    {
+      "description": "Sa-Shi Cat Food Bonito & Mackerel 1.76z - POUCH",
+      "sku": "P-21740",
       "quantityOnHand": 4
     },
     {
@@ -1622,6 +1647,11 @@
       "quantityOnHand": 0
     },
     {
+      "description": "FROMM Gold GRAIN FREE Canned Dog Food Lamb & Sweet Potato Pate 12.2z - CASE",
+      "sku": "P-23862",
+      "quantityOnHand": 4
+    },
+    {
       "description": "FROMM Four Star Cat Canned Food Beef & Venison Pate 5.5z - CASE",
       "sku": "P-23848",
       "quantityOnHand": 2
@@ -1715,11 +1745,6 @@
       "description": "Stella & Chewy’s Wild Weenies CHICKEN 3.25z",
       "sku": "P-24890",
       "quantityOnHand": 2
-    },
-    {
-      "description": "FROMM Gold GRAIN FREE Canned Dog Food Lamb & Sweet Potato Pate 12.2z - CAN",
-      "sku": "P-23856",
-      "quantityOnHand": 0
     },
     {
       "description": "Earth Animal No Hide Venison Chews - DNR 4\" EACH",
@@ -2200,6 +2225,11 @@
       "description": "Jolly Pet - FAT TAIL CHRISTMAS ASSORTED Large",
       "sku": "P-28672",
       "quantityOnHand": 0
+    },
+    {
+      "description": "Pet Releaf EDIBITES CBD Peanut Butter & Carob Calming Large Breed 7.5z",
+      "sku": "P-28656",
+      "quantityOnHand": 4
     },
     {
       "description": "KOHA Dog Cans - Pure Shreds Chicken & Beef 12.5z - CASE of 12",
@@ -2699,7 +2729,7 @@
     {
       "description": "WestPaw SKAMP - Large Assorted Colors",
       "sku": "P-26154",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "WestPaw Zisc Large - GLOW ZISC",
@@ -3087,6 +3117,11 @@
       "quantityOnHand": -12
     },
     {
+      "description": "ZIGNATURE Dry Dog Food Turkey Formula 12.5#",
+      "sku": "P-21960",
+      "quantityOnHand": 4
+    },
+    {
       "description": "ZIGNATURE Dry Dog Food Pork Formula 25#",
       "sku": "P-22787",
       "quantityOnHand": 0
@@ -3094,7 +3129,7 @@
     {
       "description": "ZIGNATURE Dry Dog Food Pork Formula 12.5#",
       "sku": "P-23038",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "ZIGNATURE Dry Dog Food Salmon Formula 12.5#",
@@ -3110,6 +3145,16 @@
       "description": "ZIGNATURE Dry Dog Food Lamb Formula 12.5#",
       "sku": "P-22478",
       "quantityOnHand": 0
+    },
+    {
+      "description": "ZIGNATURE Dry Dog Food Duck Formula 25#",
+      "sku": "P-21968",
+      "quantityOnHand": 4
+    },
+    {
+      "description": "ZIGNATURE Dry Dog Food Goat Formula 4#",
+      "sku": "P-24031",
+      "quantityOnHand": 4
     },
     {
       "description": "ZIGNATURE Canned Dog Food Venison Formula CASE - 13z",
@@ -3269,7 +3314,7 @@
     {
       "description": "Fussie Cat Premium Canned Food Tuna Formula in Aspic CASE - 2.82z",
       "sku": "P-22003",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "The Blissful Dog Butters 1z Tin Nose Butter",
@@ -3569,7 +3614,7 @@
     {
       "description": "Nutrisource Performance 30/20 40#",
       "sku": "P-7637",
-      "quantityOnHand": 0
+      "quantityOnHand": 2
     },
     {
       "description": "Sojo’s Grain-Free Dog Food - Fruit & Veggie - 2#",
@@ -4224,7 +4269,7 @@
     {
       "description": "Pure Vita Grain-Free Canned Cat Food Salmon Entree CASE - 5.5z",
       "sku": "P-23509",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "Pure Vita Grain-Free Canned Cat Food Ocean Fish CAN - 5.5z",
@@ -4394,7 +4439,7 @@
     {
       "description": "WONDERCIDE Flea and Tick Spray , Lemongrass 32z",
       "sku": "P-24203",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "WONDERCIDE Flea and Tick Spray , Lemongrass 16z",
@@ -4997,11 +5042,6 @@
       "quantityOnHand": 0
     },
     {
-      "description": "NULO Freestyle Limited PLUS Adult LID Salmon 22#",
-      "sku": "P-28140",
-      "quantityOnHand": -2
-    },
-    {
       "description": "INABA Cat Churu Treats Chicken Wrap 1.4z Roll",
       "sku": "P-28015",
       "quantityOnHand": 0
@@ -5549,7 +5589,7 @@
     {
       "description": "Precious Cat - Cat Attract- R&R Respiratory Relief - Cat Litter 20#",
       "sku": "P-9918",
-      "quantityOnHand": 0
+      "quantityOnHand": -2
     },
     {
       "description": "Weruva Dog Cans  - Cirque De la Mer - 14z - CASE",
@@ -5792,6 +5832,11 @@
       "quantityOnHand": 0
     },
     {
+      "description": "Weruva - BFF Pouches - 3z Cat Tuna & Salmon Sweet Cheeks",
+      "sku": "P-10889",
+      "quantityOnHand": 4
+    },
+    {
       "description": "WERUVA Cats in the Kitchen - CASE Funk in the Trunk 6z",
       "sku": "P-11395",
       "quantityOnHand": -2
@@ -5879,7 +5924,7 @@
     {
       "description": "Greenies 12z Large",
       "sku": "P-11612",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "Weruva BFF Pouches - 3z MASTERCASES Cat Tuna & Lamb Luv Ya",
@@ -6104,7 +6149,7 @@
     {
       "description": "Weruva - Dogs In The Kitchen: Pouches The Double Dip 2.8oz",
       "sku": "P-18483",
-      "quantityOnHand": 4
+      "quantityOnHand": 0
     },
     {
       "description": "PLATO Hundur's Crunch - Fish Treats for Dogs Minis 10z",
@@ -6457,6 +6502,11 @@
       "quantityOnHand": 0
     },
     {
+      "description": "Weruva - BFF - OMG Beef & Chicken Booya! 2.8z - POUCH",
+      "sku": "P-23048",
+      "quantityOnHand": 4
+    },
+    {
       "description": "Weruva - BFF - OMG Chicken & Pumpkin 5.5z - CASE OF 12",
       "sku": "P-27639",
       "quantityOnHand": 0
@@ -6480,6 +6530,11 @@
       "description": "Holistic Hound CBD Treats 250mg Mushroom Oil 1z",
       "sku": "P-24022",
       "quantityOnHand": 0
+    },
+    {
+      "description": "INSTINCT - Raw Boost Mixers - FUNCTIONAL Mobility Support 5.5z",
+      "sku": "P-24334",
+      "quantityOnHand": 4
     },
     {
       "description": "Outward Hound Fattiez COW .",
@@ -6747,7 +6802,7 @@
       "quantityOnHand": 2
     },
     {
-      "description": "True Blue Moisture Rich Conditioning Creme Rinse",
+      "description": "True Blue Moisture Rich Conditioning Creme Rinse-DNR",
       "sku": "P-4049",
       "quantityOnHand": 0
     },
@@ -6792,7 +6847,7 @@
       "quantityOnHand": 4
     },
     {
-      "description": "True Blue Natural Balance Conditioning Shampoo 8.7z",
+      "description": "True Blue Natural Balance Conditioning Shampoo 8.7z-DNR",
       "sku": "P-7327",
       "quantityOnHand": 0
     },
@@ -9694,7 +9749,7 @@
     {
       "description": "TOM RMDY CT LAXATONE CTNP 4.2Z",
       "sku": "P-6262",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "FOU MZZL QUICK FIT SZ 3",
@@ -10235,11 +10290,6 @@
       "description": "VIR BOWL OVAL CAT RBBR BOTTOM",
       "sku": "P-19831",
       "quantityOnHand": 0
-    },
-    {
-      "description": "Nulo Freestyle: Cat - Chicken  & Herring CASE 24 - 5.5z",
-      "sku": "P-19714",
-      "quantityOnHand": 4
     },
     {
       "description": "VAN LTTR PAN HIGH SIDE CRNR LG",
@@ -10904,7 +10954,7 @@
     {
       "description": "Feline Greenies Dental Cat Treats Catnip 9.75z Jumbo Size",
       "sku": "P-28003",
-      "quantityOnHand": 0
+      "quantityOnHand": -2
     },
     {
       "description": "Loving Pet Feeders Cat Antique Copper Single 8z",
@@ -11554,7 +11604,7 @@
     {
       "description": "GREENIES - Blueberry Flavor Petite 12z",
       "sku": "P-17790",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "Dura Pet Stainless Bowl Tilt-a-Bowl Large",
@@ -11702,11 +11752,6 @@
       "quantityOnHand": 2
     },
     {
-      "description": "Nulo Freestyle Dog Trout SENIOR 4.5#",
-      "sku": "P-18903",
-      "quantityOnHand": 0
-    },
-    {
       "description": "Spot Ethical Skinneez Xtreme Snake Squeaker 25\"",
       "sku": "P-18729",
       "quantityOnHand": 0
@@ -11722,11 +11767,6 @@
       "quantityOnHand": 0
     },
     {
-      "description": "Nulo Freestyle Cat Salmon & Mackerel CASE - 5.5z",
-      "sku": "P-18658",
-      "quantityOnHand": 4
-    },
-    {
       "description": "Nulo Freestyle Dog Salmon 24#",
       "sku": "P-18914",
       "quantityOnHand": 2
@@ -11739,7 +11779,7 @@
     {
       "description": "Nulo Freestyle Dog Turkey 24#",
       "sku": "P-18912",
-      "quantityOnHand": 0
+      "quantityOnHand": 4
     },
     {
       "description": "NUL DRY G/F CT/KTTN CHKN 12#",
@@ -11750,11 +11790,6 @@
       "description": "Nulo Freestyle Shredded Turkey & Halibut CAN - 3z",
       "sku": "P-21636",
       "quantityOnHand": 0
-    },
-    {
-      "description": "Nulo Freestyle Dog Cod & Lentils TRIM 24#",
-      "sku": "P-18916",
-      "quantityOnHand": 4
     },
     {
       "description": "NULO DRY CAT INDOOR DUCK 12#",
@@ -12222,6 +12257,11 @@
       "quantityOnHand": 4
     },
     {
+      "description": "Lucy Pet Products Dry Dog Food Salmon, Pumpkin & Quinoa 4.5#",
+      "sku": "P-22447",
+      "quantityOnHand": 0
+    },
+    {
       "description": "Lucy Pet Products Dry Dog Food Duck, Pumpkin & Quinoa 25#",
       "sku": "P-22452",
       "quantityOnHand": 0
@@ -12520,6 +12560,11 @@
       "description": "Jackson Galaxy Cat Bowls Nova Stainless Steel",
       "sku": "P-24342",
       "quantityOnHand": 0
+    },
+    {
+      "description": "Coastal Grooming Tools Firm Slicker Brush with Coated Tips, Large W466",
+      "sku": "P-24545",
+      "quantityOnHand": 4
     },
     {
       "description": "Coastal Grooming Tools Professional Nail Trimmer Classic W6106",
@@ -12840,6 +12885,11 @@
       "description": "NULO Freeze Dried DUCK 13z",
       "sku": "P-26060",
       "quantityOnHand": 0
+    },
+    {
+      "description": "NUL PCH BONE BROTH CHKN 20Z",
+      "sku": "P-26064",
+      "quantityOnHand": 4
     },
     {
       "description": "NULO Freeze Dried LAMB 13z",
@@ -13449,7 +13499,7 @@
     {
       "description": "FUSSIE CAT - PUREE GF Chicken & Duck .5z - 4 count bag",
       "sku": "P-28755",
-      "quantityOnHand": 0
+      "quantityOnHand": -4
     },
     {
       "description": "FUSSIE CAT - PUREE GF Tuna & Prawn .5z - 4 count bag",
@@ -13744,7 +13794,7 @@
     {
       "description": "Feline Greenies Dental Cat Treats Chicken 21z",
       "sku": "P-28796",
-      "quantityOnHand": 0
+      "quantityOnHand": 2
     },
     {
       "description": "Midwest Pet Bed - Ortho Nest - Teflon Grey 20\"",
@@ -13940,6 +13990,11 @@
       "description": "A PUP ABOVE Texas Beef Stew 3#",
       "sku": "210000024508",
       "quantityOnHand": 0
+    },
+    {
+      "description": "A PUP ABOVE Turkey Pawella 7#",
+      "sku": "210000024511",
+      "quantityOnHand": 4
     },
     {
       "description": "Messy Mutts Silicone MICROFIBER ULTIMATE BOWL SPONGE Small .",
@@ -14299,12 +14354,12 @@
     {
       "description": "KOHA Dog Canned STEW Duck 12.7z - CAN",
       "sku": "210000024797",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
-      "description": "KOHA Dog Canned STEW Lamb 12.7z - CAN",
-      "sku": "210000024798",
-      "quantityOnHand": 0
+      "description": "KOHA Dog Canned STEW Pork 12.7z - CAN",
+      "sku": "210000024799",
+      "quantityOnHand": 4
     },
     {
       "description": "KOHA Dog Canned STEW Beef 12.7z - CASE of 12",
@@ -14324,7 +14379,7 @@
     {
       "description": "KOHA Dog Canned STEW Lamb 12.7z - CASE of 12",
       "sku": "210000024805",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "KOHA Dog Canned STEW Pork 12.7z - CASE of 12",
@@ -15657,6 +15712,11 @@
       "quantityOnHand": 2
     },
     {
+      "description": "Fromm Four Star Chicken a la Veg 26#",
+      "sku": "210000025687",
+      "quantityOnHand": 2
+    },
+    {
       "description": "Fromm Classic Turkey & Rice Pate 12.2z - CASE",
       "sku": "210000025695",
       "quantityOnHand": 2
@@ -15665,6 +15725,11 @@
       "description": "Fromm Classic Chicken & Rice Pate 12.2z - CASE",
       "sku": "210000025697",
       "quantityOnHand": 4
+    },
+    {
+      "description": "Weruva Canned Kitten Food Chicken Puree 3z - CAN",
+      "sku": "210000025699",
+      "quantityOnHand": 0
     },
     {
       "description": "VIP Mighty MD Micro Ball Bear - Medium",
@@ -16182,6 +16247,11 @@
       "quantityOnHand": 4
     },
     {
+      "description": "Weruva Canned Kitten Food Tuna & Salmon Puree 3z - CAN",
+      "sku": "210000026014",
+      "quantityOnHand": 4
+    },
+    {
       "description": "N/M S/O URINE DSTRYR-P POUR 32",
       "sku": "210000026016",
       "quantityOnHand": 0
@@ -16215,6 +16285,11 @@
       "description": "MOUSER - Canned Cat Food Brush Hunter - with Rabbit 5.5z - CAN",
       "sku": "210000026023",
       "quantityOnHand": -2
+    },
+    {
+      "description": "Fromm Gold Dog Food Senior Reduced Activity 30#",
+      "sku": "210000026030",
+      "quantityOnHand": 4
     },
     {
       "description": "BARRETT BALL RED 2.5\"",
@@ -16904,12 +16979,12 @@
     {
       "description": "Tucker's Frozen Raw C=6 Pork-Bison 20# BULK",
       "sku": "210000026484",
-      "quantityOnHand": -6
+      "quantityOnHand": -2
     },
     {
       "description": "Tucker's Frozen Raw C=6 Beef & Pumpkin Complete 20# BULK",
       "sku": "210000026485",
-      "quantityOnHand": 0
+      "quantityOnHand": 4
     },
     {
       "description": "RESCUE ROVER - Pet Alert Fire Rescue Window Cling - 2 count",
@@ -17259,7 +17334,7 @@
     {
       "description": "First Mate Cat Food LID GRAIN-FREE Duck & Blueberries Formula 10#",
       "sku": "210000026661",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "First Mate Cat Food GRAIN-FREE Chicken & Blueberries Formula 10#",
@@ -17472,6 +17547,11 @@
       "quantityOnHand": 2
     },
     {
+      "description": "The Honest Kitchen Treats.2 PARMESAN PECKS Duck & Cherry 8z  6=C",
+      "sku": "210000026852",
+      "quantityOnHand": 4
+    },
+    {
       "description": "PCR Cat Furniture Scratching Tree GRAY 20\"",
       "sku": "210000026853",
       "quantityOnHand": 2
@@ -17594,7 +17674,7 @@
     {
       "description": "FROMM Gold Cat Food Indoor 4#",
       "sku": "210000026973",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "FROMM Gold Cat Food Indoor 10#",
@@ -17604,12 +17684,12 @@
     {
       "description": "FROMM Gold Cat Food Healthy Weight 4#",
       "sku": "210000026975",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "FROMM Gold Cat Food Kitten 4#",
       "sku": "210000026976",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "FROMM Gold Cat Food Healthy Weight 10#",
@@ -17685,6 +17765,11 @@
       "description": "MESSY MUTTS DOG GROOMING MITT CHENILLE BLUE",
       "sku": "210000027013",
       "quantityOnHand": 0
+    },
+    {
+      "description": "Etta Says! Cookies Peanut Butter 5\"",
+      "sku": "210000027018",
+      "quantityOnHand": -18
     },
     {
       "description": "URINE OFF - Find It and treat It KIT",
@@ -17854,6 +17939,11 @@
     {
       "description": "ZIGNATURE Soft-Moist Treats Venison 4z",
       "sku": "210000027171",
+      "quantityOnHand": 2
+    },
+    {
+      "description": "ZIGNATURE Soft-Moist Treats Trout 4z",
+      "sku": "210000027173",
       "quantityOnHand": 4
     },
     {
@@ -17864,7 +17954,7 @@
     {
       "description": "ZIGNATURE Soft-Moist Treats Pork 4z",
       "sku": "210000027175",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "ZIGNATURE Soft-Moist Treats Duck 4z",
@@ -18404,7 +18494,7 @@
     {
       "description": "PLATO - Baltic Herring Treat - 8.5z",
       "sku": "210000027361",
-      "quantityOnHand": 4
+      "quantityOnHand": 0
     },
     {
       "description": "Fashion Pet Sweaters - PANDA BLUE L",
@@ -18772,6 +18862,11 @@
       "quantityOnHand": 2
     },
     {
+      "description": "Fromm PURRSNAC-KITTY Cat Treats Salmon 3z",
+      "sku": "210000027514",
+      "quantityOnHand": 4
+    },
+    {
       "description": "Fromm PURRSNAC-KITTY Cat Treats Chicken 3z",
       "sku": "210000027516",
       "quantityOnHand": 4
@@ -18810,6 +18905,11 @@
       "description": "Etta Says! Cookies Pumpkin Spice 5\"",
       "sku": "210000027533",
       "quantityOnHand": 0
+    },
+    {
+      "description": "Weruva WX - Low Phosphorus Canned Cat Chicken 3z - CAN",
+      "sku": "210000027548",
+      "quantityOnHand": 4
     },
     {
       "description": "Spot Ethical FUN FOOD Dog Toy SKITTAILS REG",
@@ -18899,7 +18999,7 @@
     {
       "description": "OPEN FARM Dog Food Wild Salmon 22#",
       "sku": "210000027598",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "OPEN FARM Dog Food PUPPY Recipe 22#",
@@ -18924,7 +19024,7 @@
     {
       "description": "OPEN FARM Dog Food Grass Fed Beef 11#",
       "sku": "P-25837",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "OPEN FARM Dog Food Farmer's Market Pork & Root Vegetable Recipe 11#",
@@ -18954,7 +19054,7 @@
     {
       "description": "MPF DRY VENTURE LID POLLOCK25#",
       "sku": "210000027654",
-      "quantityOnHand": 0
+      "quantityOnHand": -6
     },
     {
       "description": "Messy Mutts Dishes Double Silicon Feeder Black LARGE Copper Bowls",
@@ -19022,9 +19122,9 @@
       "quantityOnHand": 4
     },
     {
-      "description": "Fromm Gold Dog Food Chicken & Rice PATE 12.2z - CAN",
-      "sku": "210000027697",
-      "quantityOnHand": 0
+      "description": "Fromm Gold Dog Food Chicken & Rice PATE 12.2z - CASE",
+      "sku": "210000027695",
+      "quantityOnHand": 4
     },
     {
       "description": "Fromm Gold Dog Food Seafood Medley 12.2z - CASE",
@@ -19782,6 +19882,11 @@
       "quantityOnHand": 2
     },
     {
+      "description": "KOHA Dog Cans - Pure Shreds Duck 12.5z - CAN",
+      "sku": "210000028118",
+      "quantityOnHand": 4
+    },
+    {
       "description": "Pet House Candles Citrus Large",
       "sku": "210000028121",
       "quantityOnHand": 0
@@ -19874,7 +19979,7 @@
     {
       "description": "FUSSIE CAT Canned Cat Food with GOAT MILK Tuna & Chicken 2.47z - CASE of 24",
       "sku": "210000028187",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "FUSSIE CAT Canned Cat Food with GOAT MILK Tuna & Salmon 2.47z - CASE of 24",
@@ -19885,16 +19990,6 @@
       "description": "FUSSIE CAT Canned Cat Food with GOAT MILK Tuna & Anchovies 2.47z - CASE of 24",
       "sku": "210000028190",
       "quantityOnHand": 4
-    },
-    {
-      "description": "FUSSIE CAT Canned Cat Food with GOAT MILK Tuna & Oceanfish 2.47z - CAN",
-      "sku": "210000028196",
-      "quantityOnHand": 2
-    },
-    {
-      "description": "FUSSIE CAT Canned Cat Food with GOAT MILK Tuna & Chicken 2.47z - CAN",
-      "sku": "210000028200",
-      "quantityOnHand": 2
     },
     {
       "description": "Red Barn Product SMPL W/G SKY 4OZ",
@@ -20714,7 +20809,12 @@
     {
       "description": "NutriSource Grain-Free Dog Food Small & Medium Breed Puppy 26#",
       "sku": "P-23608",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
+    },
+    {
+      "description": "NutriSource Grain-Free Dog Food Seafood 26#",
+      "sku": "P-9565",
+      "quantityOnHand": 4
     },
     {
       "description": "NutriSource Grain-Free Dog Food Senior 26#",
@@ -21119,7 +21219,7 @@
     {
       "description": "FIRST MATE - Grain FRIENDLY Dog Formulas New Zealand BEEF Meal & Oats 25#",
       "sku": "210000029052",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "WestPaw Dog Toy - TOPPL Stopper",
@@ -22919,7 +23019,7 @@
     {
       "description": "Dr. Marty Nature's Blend ACTIVE VITALITY (SENIOR) 6z",
       "sku": "210000029798",
-      "quantityOnHand": 0
+      "quantityOnHand": -2
     },
     {
       "description": "SQUARE PET VFS CANINE LOW PHOSPHORUS FORMULA 22#",
@@ -23014,7 +23114,7 @@
     {
       "description": "OPEN FARM Dog Food Puppy Formula with ANCIENT GRAINS 22#",
       "sku": "210000029846",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "ACANA SINGLES Beef & Pumpkin 22.5#",
@@ -23284,22 +23384,17 @@
     {
       "description": "OPEN FARM Dog Toppers Salmon 4.59z Tin - CASE of 12",
       "sku": "210000030044",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
+    },
+    {
+      "description": "OPEN FARM Dog Toppers Salmon & Cod 4.59z Tin - CASE of 12",
+      "sku": "210000030045",
+      "quantityOnHand": 4
     },
     {
       "description": "OPEN FARM Dog Toppers Arctic Char 4.59z Tin - CASE of 12",
       "sku": "210000030046",
       "quantityOnHand": 4
-    },
-    {
-      "description": "OPEN FARM Dog Toppers Salmon & Cod 4.59z Tin - EACH",
-      "sku": "210000030048",
-      "quantityOnHand": 2
-    },
-    {
-      "description": "OPEN FARM Dog Toppers Salmon 4.59z Tin - Each",
-      "sku": "210000030050",
-      "quantityOnHand": 2
     },
     {
       "description": "OPEN FARM Cat Toppers Salmon 3.17z Tin - CASE of 12",
@@ -23339,7 +23434,7 @@
     {
       "description": "Red Barn product DRY Grain Free PUPPY 22#",
       "sku": "210000030114",
-      "quantityOnHand": 0
+      "quantityOnHand": -2
     },
     {
       "description": "Red Barn product DRY Whole Grain  PUPPY  22#",
@@ -24524,7 +24619,7 @@
     {
       "description": "Nutrisource ELEMENTS CANNED Cat Food SCENIC MEADOW TURKEY, DUCK & RABBIT 5.5z - CASE of 12",
       "sku": "210000030704",
-      "quantityOnHand": 0
+      "quantityOnHand": -4
     },
     {
       "description": "Nutrisource ELEMENTS CANNED Cat Food PACIFIC SHORES CHICKEN, SALMON & HERRING 5.5z - CASE of 12",
@@ -24782,6 +24877,11 @@
       "quantityOnHand": 2
     },
     {
+      "description": "Farmina N&D Quinoa - FELINE DIGESTION - Lamb 3.3#",
+      "sku": "210000030811",
+      "quantityOnHand": 4
+    },
+    {
       "description": "Farmina N&D Canned Cat Food PRIME Chicken & Pomegranate 2.5z - CASE of 24",
       "sku": "210000030818",
       "quantityOnHand": 4
@@ -24904,7 +25004,7 @@
     {
       "description": "Natural Farms Treats Bully Cheek Sticks Braided 6\" 3 ct",
       "sku": "210000030892",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "Natural Farms Treats Bully Sticks Odor Free 6\" 3 ct",
@@ -24914,7 +25014,7 @@
     {
       "description": "Natural Farms Treats Bully Sticks Odor Free 6\" PIXIE 15 ct",
       "sku": "210000030894",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "Natural Farms Treats Whole Anchovies 3z",
@@ -24944,7 +25044,7 @@
     {
       "description": "Natural Farms Treats Beef Jerky 10 ct",
       "sku": "210000030902",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "JOLLY TOY SOCCER BALL ORANGE 4IN",
@@ -25339,7 +25439,7 @@
     {
       "description": "Tucker's Frozen Raw C=6 Surf & Turf 20# BULK",
       "sku": "210000031079",
-      "quantityOnHand": 0
+      "quantityOnHand": 4
     },
     {
       "description": "BADLANDS RANCH - Superfood Complete - BEEF - 11.5z",
@@ -25739,7 +25839,7 @@
     {
       "description": "FUSSIE CAT Canned Cat Food with GOAT MILK Chicken 2.47z - CASE of 24",
       "sku": "210000031278",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "FUSSIE CAT FINE DINING PATE Sardine 2.82z - CASE OF 24",
@@ -26294,7 +26394,7 @@
     {
       "description": "RAW DYNAMIC FREEZE DRIED FOOD RABBIT 14z",
       "sku": "210000031541",
-      "quantityOnHand": 2
+      "quantityOnHand": 4
     },
     {
       "description": "RAW DYNAMIC FREEZE DRIED FOOD DUCK 14z",
@@ -26339,6 +26439,11 @@
     {
       "description": "RAW DYNAMIC BONE BROTH BEEF for Cats 12z",
       "sku": "210000031552",
+      "quantityOnHand": 4
+    },
+    {
+      "description": "RAW DYNAMIC FREEZE DRIED TREATS TURKEY 1.5z",
+      "sku": "210000031557",
       "quantityOnHand": 4
     },
     {
@@ -26474,7 +26579,7 @@
     {
       "description": "RAW DYNAMIC FROZEN DOG FOOD BEEF 12# BULK BOX",
       "sku": "210000031601",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "RAW DYNAMIC FREEZE DRIED FOOD BEEF 5.5z - FOR CATS",
@@ -27039,7 +27144,12 @@
     {
       "description": "GREEN JUJU Frozen Dog/Cat Food RAW GOAT MILK 32z",
       "sku": "210000031755",
-      "quantityOnHand": 4
+      "quantityOnHand": 0
+    },
+    {
+      "description": "GREEN JUJU Frozen Dog/Cat Food RAW GOAT MILK 16z",
+      "sku": "210000031756",
+      "quantityOnHand": 0
     },
     {
       "description": "NutriSource Grain-Free Dog Food Small & Medium Breed Puppy 4#",
@@ -27134,7 +27244,7 @@
     {
       "description": "Tucker's Frozen Raw C=6 PORK - DUCK - PUMPKIN 20# BULK",
       "sku": "210000031855",
-      "quantityOnHand": 0
+      "quantityOnHand": 2
     },
     {
       "description": "NutriSource Small/Medum Breed Puppy Chicken & Rice 12#",
@@ -27164,7 +27274,7 @@
     {
       "description": "NutriSource Grain-Free Dog Food Lamb 12#",
       "sku": "P-9557",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "NutriSource Grain-Free Dog Food Seafood 12#",
@@ -27255,6 +27365,11 @@
       "description": "FROMM Gold Canned Cat Food Healthy Weight - Chicken & Duck Pate 3z - CASE of 12",
       "sku": "210000031900",
       "quantityOnHand": 2
+    },
+    {
+      "description": "FROMM Four Star Cat Canned Food Shredded Surf and Turf 3z - CAN",
+      "sku": "210000031918",
+      "quantityOnHand": 0
     },
     {
       "description": "FROMM Gold Canned Cat Food Adult Chicken, Duck, Salmon Pate 3z - CASE of 12",
@@ -27649,7 +27764,7 @@
     {
       "description": "Dr. Marty's Treats TILLY'S Beef Liver 4z",
       "sku": "210000032106",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "KON TOY CT COMFT KEY PLYMAT",
@@ -27922,6 +28037,11 @@
       "quantityOnHand": 2
     },
     {
+      "description": "Fromm Classic Whitefish & Rice 15#",
+      "sku": "210000032191",
+      "quantityOnHand": 4
+    },
+    {
       "description": "KON TOY COMFT PUPS GOLDIE MD",
       "sku": "210000032200",
       "quantityOnHand": 0
@@ -27957,6 +28077,11 @@
       "quantityOnHand": 2
     },
     {
+      "description": "ACANA CLASSICS Canned Dog Food BEEF Pate 12.5z - CAN",
+      "sku": "210000032215",
+      "quantityOnHand": 2
+    },
+    {
       "description": "PAWSE - Bark Less Bites Hip & Joint Gravy - CBD + Other Joint Supplements (Natural Bacon Flavor) 1000mg",
       "sku": "210000032219",
       "quantityOnHand": 4
@@ -27969,6 +28094,11 @@
     {
       "description": "**NEW SIZE**NutriSource Canned Dog Food Trout and Rice 12.3z - CASE",
       "sku": "210000032221",
+      "quantityOnHand": 4
+    },
+    {
+      "description": "**NEW SIZE**NutriSource Canned Dog Food Beef and Rice 12.3z - CASE",
+      "sku": "210000032222",
       "quantityOnHand": 4
     },
     {
@@ -28129,7 +28259,7 @@
     {
       "description": "Dr. Marty Nature's Blend SMALL BREED 48z",
       "sku": "210000032333",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "Hugglehound Toys X-BRACE Moose 16\" Each",
@@ -28235,6 +28365,11 @@
       "description": "In Clover CONNECTIN JOINT 90 gram POWDER",
       "sku": "210000032381",
       "quantityOnHand": 2
+    },
+    {
+      "description": "In Clover DAILY MULTIVITAMIN 100 gram",
+      "sku": "210000032383",
+      "quantityOnHand": 4
     },
     {
       "description": "In Clover CONNECTIN JOINT 80 count LARGE BREED",
@@ -28419,7 +28554,7 @@
     {
       "description": "Fromm Gold Dog Food Large Breed Puppy 15#",
       "sku": "210000032465",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "BOSS DOG Tactical Collars PINK #11 1.5\" W LARGE",
@@ -28492,6 +28627,11 @@
       "quantityOnHand": 2
     },
     {
+      "description": "MUTT GUT Pouch Over 40 # 120 gram",
+      "sku": "210000032500",
+      "quantityOnHand": 4
+    },
+    {
       "description": "MUTT GUT Pouch Under 40 # 60 gram",
       "sku": "210000032501",
       "quantityOnHand": 2
@@ -28554,7 +28694,7 @@
     {
       "description": "RAWZ Digestive CANS for DOGS TURKEY & PUMPKIN 12.5z - CASE OF 12",
       "sku": "210000032520",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "RAWZ STEWS & HUNKS FOR DOGS CHICKEN CHICKEN LIVER & GOAT MILK STEW 10z CAN - CASE of 12",
@@ -28734,11 +28874,16 @@
     {
       "description": "VITAL ESSENTIALS FREEZE DRIED CAT TREATS (2025) Minnows .5z",
       "sku": "210000032600",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "VITAL ESSENTIALS FREEZE DRIED CAT TREATS (2025) Chicken Giblets 1z",
       "sku": "210000032602",
+      "quantityOnHand": 2
+    },
+    {
+      "description": "VITAL ESSENTIALS FREEZE DRIED CAT TREATS (2025) Salmon Bites 1.1z",
+      "sku": "210000032606",
       "quantityOnHand": 4
     },
     {
@@ -28759,7 +28904,7 @@
     {
       "description": "VITAL ESSENTIAL FREEZE DRIED DOG TREAT (2025) Chicken Heart 1.9z",
       "sku": "210000032613",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "VITAL ESSENTIALS FREEZE DRIED DOG TREATS (2025) Duck Bites 2z",
@@ -29139,7 +29284,7 @@
     {
       "description": "WOOF PUP Pop REFILL Pops - Large Calming",
       "sku": "210000032758",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "RBP TRT CLLGN ESOPHGS ROLL MD",
@@ -29557,6 +29702,11 @@
       "quantityOnHand": 4
     },
     {
+      "description": "FROMM Nutritionals MOBILITY 13z - Can",
+      "sku": "210000032946",
+      "quantityOnHand": 4
+    },
+    {
       "description": "Nulo Freestyle Small Breed Beef & Sweet Potato 11#",
       "sku": "210000032951",
       "quantityOnHand": 2
@@ -29722,14 +29872,9 @@
       "quantityOnHand": 0
     },
     {
-      "description": "TUCKER'S Frozen BOOST CUBES PUREED TURKEY HEART AND LIVER 1#",
-      "sku": "210000033052",
-      "quantityOnHand": 2
-    },
-    {
       "description": "TUCKER'S Frozen BOOST CUBES PUREED PORK HEART AND LIVER 1#",
       "sku": "210000033053",
-      "quantityOnHand": 0
+      "quantityOnHand": 4
     },
     {
       "description": "RAWZ CAT CANS - Gravy Formula Tuna Mackerel 3z - CASE of 18",
@@ -29904,7 +30049,7 @@
     {
       "description": "SKOUT'S HONOR GROOMING  SHAMPOO CONDITIOINER HONEYSUCKLE 16z",
       "sku": "210000033144",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "SKOUT'S HONOR GROOMING  DOG & CAT PROBIOTIC SHAMPOO & CONDITIONER SUNKISSED COCONUT 16z",
@@ -29944,31 +30089,6 @@
     {
       "description": "SKOUT's HONOR DOG LAUNDRY BOOST STAIN & ODOR REMOVER 32z",
       "sku": "210000033163",
-      "quantityOnHand": 2
-    },
-    {
-      "description": "NULO Dog Pouches - CASE Chicken & Green Beans 2.8z",
-      "sku": "210000033164",
-      "quantityOnHand": 4
-    },
-    {
-      "description": "NULO Dog Pouches - CASE Chicken , Duck & Kale 2.8z",
-      "sku": "210000033165",
-      "quantityOnHand": 4
-    },
-    {
-      "description": "NULO Dog Pouches - CASE Beef, Liver & Kale 2.8z",
-      "sku": "210000033166",
-      "quantityOnHand": 4
-    },
-    {
-      "description": "NULO Dog Pouches - CASE Lamb, Saba & Kelp 2.8z",
-      "sku": "210000033168",
-      "quantityOnHand": 4
-    },
-    {
-      "description": "NULO Dog Pouches - CASE Mackerel, Chicken & Mussel 2.8z",
-      "sku": "210000033169",
       "quantityOnHand": 2
     },
     {
@@ -30129,6 +30249,11 @@
     {
       "description": "WOOF PUP Pop X- Large BDAY",
       "sku": "210000033235",
+      "quantityOnHand": 4
+    },
+    {
+      "description": "WOOF PUP Pop Large BEEF &PB",
+      "sku": "210000033237",
       "quantityOnHand": 4
     },
     {
@@ -30694,7 +30819,7 @@
     {
       "description": "ORIJEN - Wild Reserve DOG FOOD Chicken with GRAINS 20#",
       "sku": "210000033453",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "Farmina N&D - CANINE Chicken & Pomegranate - ANCESTRAL GRAIN - Adult Medium & Maxi 26.4#",
@@ -30769,7 +30894,7 @@
     {
       "description": "NutriSource Dry Cat Food Country Select Grain-Free 12#",
       "sku": "210000033501",
-      "quantityOnHand": 0
+      "quantityOnHand": 4
     },
     {
       "description": "Pet Sport Laser Chase",
@@ -30819,7 +30944,7 @@
     {
       "description": "COASTAL LEAD K9 EXPL EVRGLD 8FT",
       "sku": "210000033515",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "COASTAL LEAD K9 EXPL GLACIER 8FT",
@@ -31149,7 +31274,7 @@
     {
       "description": "Plato Wild Caught Baltic Sprat - 7.5z",
       "sku": "210000033616",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "Nature's Variety INSTINCT SIGNATURE Raw Bites Puppy 2.7#",
@@ -31300,6 +31425,11 @@
       "description": "Pure Vita LIMITED INGREDIENT Dog Food GRAIN-INCLUSIVE SALMON & KALE 12#",
       "sku": "210000033671",
       "quantityOnHand": 2
+    },
+    {
+      "description": "Pure Vita LIMITED INGREDIENT Dog Food GRAIN-INCLUSIVE SALMON & KALE 25#",
+      "sku": "210000033672",
+      "quantityOnHand": 4
     },
     {
       "description": "Pure Vita LIMITED INGREDIENT Dog Food GRAIN-INCLUSIVE TURKEY & CRANBERRY 12#",
@@ -31654,7 +31784,7 @@
     {
       "description": "VITAL ESSENTIALS DOG SOFT NIBS (2025) BEEF & SALMON 3#",
       "sku": "210000033826",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "VITAL ESSENTIALS DOG SOFT NIBS (2025) LAMB & WHITEFISH 3#",
@@ -31687,9 +31817,14 @@
       "quantityOnHand": 0
     },
     {
+      "description": "OPEN FARM GENTLY COOKED Fish 16z   8=CS",
+      "sku": "210000033835",
+      "quantityOnHand": 4
+    },
+    {
       "description": "OPEN FARM GENTLY COOKED Tummy Rescue 6# BOX",
       "sku": "210000033838",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "BADLANDS RANCH - Superfood Complete - LAMB & VENISON - 64z",
@@ -32484,7 +32619,7 @@
     {
       "description": "Pure Cravings Cat  Flakes Mackerel Tuna Consomme 3z C=12 single",
       "sku": "210000034093",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "Pure Cravings Cat  Case Flakes Salmon Tuna Consomme 3z C=12",
@@ -32500,6 +32635,11 @@
       "description": "Pure Cravings Cat  Case Flakes Tuna Tuna Consomme 3z C=12",
       "sku": "210000034100",
       "quantityOnHand": 0
+    },
+    {
+      "description": "Pure Cravings Cat  Flakes Tuna Tuna Consomme 3z C=12 single",
+      "sku": "210000034102",
+      "quantityOnHand": 4
     },
     {
       "description": "Pure Cravings Cat  Case Minced Tuna Chicken 3z C=12",
@@ -32519,7 +32659,7 @@
     {
       "description": "Pure Cravings Cat  Minced Tuna Salmon 3z C=12 single",
       "sku": "210000034112",
-      "quantityOnHand": 0
+      "quantityOnHand": -2
     },
     {
       "description": "Pure Cravings Cat  Case Minced Tuna Sardines 3z C=12",
@@ -33109,7 +33249,7 @@
     {
       "description": "OPEN FARM - GOODGUT Beef 3.5#",
       "sku": "210000034355",
-      "quantityOnHand": 4
+      "quantityOnHand": 2
     },
     {
       "description": "OPEN FARM - GOODGUT Salmon 19#",
@@ -33124,7 +33264,7 @@
     {
       "description": "OPEN FARM - GOODGUT Beef 19#",
       "sku": "210000034358",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "Natural Farms Treats Bully Springs - Odor Free 3 ct",
@@ -33194,12 +33334,7 @@
     {
       "description": "KOHA Dog Canned STEW Rabbit 12.7z - CASE",
       "sku": "210000034388",
-      "quantityOnHand": 4
-    },
-    {
-      "description": "KOHA Dog Canned STEW Rabbit 12.7z -  Single",
-      "sku": "210000034390",
-      "quantityOnHand": 0
+      "quantityOnHand": 2
     },
     {
       "description": "Koha Dog Crunchy Sticks  Beef 10.58z",
@@ -33544,7 +33679,7 @@
     {
       "description": "Red barn product DNTL C-A-B HYDRANT Small 24 ct",
       "sku": "210000034547",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "Kong Toy For Cats WUBBA Butterfly",
@@ -34434,7 +34569,7 @@
     {
       "description": "Weruva Dog Awesome  Chicken Vegtables 6z single",
       "sku": "210000034911",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "Weruva Dog Awesome  Chicken Vegtables 14z",
@@ -34519,12 +34654,12 @@
     {
       "description": "INSTINCT CAT GRAIN FREE SPLIT CUP CHICKEN PATE 2.64z",
       "sku": "210000034961",
-      "quantityOnHand": 2
+      "quantityOnHand": -2
     },
     {
       "description": "INSTINCT CAT GRAIN FREE SPLIT CUP SALMON PATE 2.64z",
       "sku": "210000034962",
-      "quantityOnHand": 2
+      "quantityOnHand": -6
     },
     {
       "description": "WOOF DOG POOMERGENCY Green Single",
@@ -34564,7 +34699,7 @@
     {
       "description": "RAWZ - Cat Food 10 Essentials Fish Dehydrated 7.8#",
       "sku": "210000034997",
-      "quantityOnHand": 2
+      "quantityOnHand": 0
     },
     {
       "description": "RAWZ - Cat Food 10 Essentials Turkey Salmon Dhydrated 3.5#",
@@ -34579,6 +34714,11 @@
     {
       "description": "RAWZ - Cat Food 10 Essentials Turkey Salmon Dhydrated 7.8#",
       "sku": "210000035000",
+      "quantityOnHand": 4
+    },
+    {
+      "description": "Vital Essentials RAW BAR - Freeze Dried Dog Treats Duck Hearts Individual Bagged",
+      "sku": "210000035005",
       "quantityOnHand": 4
     },
     {
@@ -34715,6 +34855,11 @@
       "description": "HUGGLEKAT TOYS PLAYKAT INTERACTIVE INDIVIDUAL",
       "sku": "210000035045",
       "quantityOnHand": 0
+    },
+    {
+      "description": "Zignature Freeze Dried Entree Dog TURKEY 25Z",
+      "sku": "210000035054",
+      "quantityOnHand": 4
     },
     {
       "description": "Zignature Freeze Dried Entree Dog PORK 25Z",
@@ -34887,9 +35032,29 @@
       "quantityOnHand": 0
     },
     {
-      "description": "Hackitty Sackitty",
-      "sku": "210000035125",
-      "quantityOnHand": 0
+      "description": "FIRST MATE - Grain FRIENDLY Dog Formulas Small Bites Chicken & Oats 12#",
+      "sku": "210000035127",
+      "quantityOnHand": 4
+    },
+    {
+      "description": "FIRST MATE - Grain FRIENDLY Dog Formulas Small Bites Fish & Oats 12#",
+      "sku": "210000035129",
+      "quantityOnHand": 4
+    },
+    {
+      "description": "FIRST MATE - Grain FRIENDLY Dog Formulas Small Bites Lamb & Oats 12#",
+      "sku": "210000035131",
+      "quantityOnHand": 4
+    },
+    {
+      "description": "FIRST MATE - Grain FRIENDLY Dog Formulas Small Bites Beef & Oats 12#",
+      "sku": "210000035133",
+      "quantityOnHand": 4
+    },
+    {
+      "description": "FIRST MATE - Grain FRIENDLY Dog Formulas Small Bites Duck & Oats 12#",
+      "sku": "210000035135",
+      "quantityOnHand": 4
     }
   ]
 }

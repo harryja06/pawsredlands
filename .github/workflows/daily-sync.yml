@@ -5,7 +5,12 @@ on:
     # Runs at 07:00 UTC every day (adjust to taste). GitHub Actions cron
     # can lag a few minutes at busy times, which is fine for a daily job.
     - cron: '0 7 * * *'
-  workflow_dispatch: {} # lets you trigger a run manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      debug_fields:
+        description: 'Log raw Item/SaleLine.Item/Customer sample records (one-off, to confirm real Lightspeed field names)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -28,6 +33,7 @@ jobs:
           LS_CLIENT_SECRET: ${{ secrets.LS_CLIENT_SECRET }}
           LS_REFRESH_TOKEN: ${{ secrets.LS_REFRESH_TOKEN }}
           LS_ACCOUNT_ID: ${{ secrets.LS_ACCOUNT_ID }}
+          DEBUG_FIELDS: ${{ (github.event_name == 'workflow_dispatch' && inputs.debug_fields) && '1' || '0' }}
         run: node scripts/sync-lightspeed.js
 
       - name: Commit updated data file
@@ -37,3 +43,4 @@ jobs:
           git add public/data.json
           git diff --cached --quiet && echo "No changes to commit" || git commit -m "Daily Lightspeed data sync"
           git push
+

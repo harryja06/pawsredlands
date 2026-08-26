@@ -1,135 +1,142 @@
 {
-  "generatedAt": "2026-08-25T09:10:33.571Z",
-  "reportDate": "2026-08-24",
-  "totalRevenue": 5220.95,
-  "transactionCount": 63,
-  "avgTransactionValue": 82.87,
-  "avgUnitsPerTransaction": 4.7,
-  "avgMarginPct": 33.5,
+  "generatedAt": "2026-08-26T09:24:53.002Z",
+  "reportDate": "2026-08-25",
+  "totalRevenue": 5665.64,
+  "transactionCount": 93,
+  "avgTransactionValue": 60.92,
+  "avgUnitsPerTransaction": 3.1,
+  "avgMarginPct": 32.6,
   "topBrands": [
     {
       "name": "Other",
-      "revenue": 3598.86
-    },
-    {
-      "name": "Dr. Marty",
-      "revenue": 615.47
-    },
-    {
-      "name": "Acana",
-      "revenue": 286.99
+      "revenue": 3987.95
     },
     {
       "name": "Fromm",
-      "revenue": 168.5
+      "revenue": 437.16
     },
     {
-      "name": "Stella & Chewy's",
-      "revenue": 135.92
+      "name": "Small Batch",
+      "revenue": 320.77
+    },
+    {
+      "name": "Zignature",
+      "revenue": 210.94
+    },
+    {
+      "name": "Nulo",
+      "revenue": 163.21
     }
   ],
   "revenueByCategory": [
     {
       "name": "Uncategorized",
-      "revenue": 5220.99
+      "revenue": 5665.62
     }
   ],
   "topItems": [
     {
-      "name": "Dr. Marty Nature's Blend ESSENTIAL WELLNESS 80z",
-      "revenue": 279.9,
+      "name": "Small Batch - PORK Batch BULK PATTIES - .5# - 36 count",
+      "revenue": 267.5,
       "unitsSold": 2
     },
     {
-      "name": "Dr. Marty Nature's Blend ESSENTIAL WELLNESS 48z",
-      "revenue": 180.07,
+      "name": "OPEN FARM Canned Dog Food PATE Turkey 12.5z - CASE of 12",
+      "revenue": 217.46,
+      "unitsSold": 4
+    },
+    {
+      "name": "Fromm Classic Adult 30#",
+      "revenue": 143.52,
+      "unitsSold": 3
+    },
+    {
+      "name": "Fromm Gold Dog Food - Large Breed Adult -Heartland-26#",
+      "revenue": 137,
       "unitsSold": 2
     },
     {
-      "name": "Dr. Marty Nature's Blend SENSITIVITY SELECT 80z",
-      "revenue": 155.5,
+      "name": "ZIGNATURE Dry Dog Food Venison Formula 25#",
+      "revenue": 107.65,
       "unitsSold": 1
     },
     {
-      "name": "AUSTIN & KAT Functional CBD Oils BACKO'S Hip and Joint 1z",
-      "revenue": 141.35,
-      "unitsSold": 2
-    },
-    {
-      "name": "A PUP ABOVE Turkey Pawella 12# BULK BOX",
-      "revenue": 135.93,
+      "name": "OPEN FARM FUNCTIONALS DIGESTIVE HEALTH - Pollock & Oatmeal 22#",
+      "revenue": 107.65,
       "unitsSold": 1
     },
     {
-      "name": "A PUP ABOVE Chicka Chicka Bow Wow 12# BULK BOX",
-      "revenue": 135.93,
+      "name": "Nutrisource - ELEMENTS COASTAL PLAINS 24#",
+      "revenue": 96.78,
       "unitsSold": 1
     },
     {
-      "name": "Weruva Dog Cans  - Paw Lickin' Chicken - 14z - CASE",
-      "revenue": 119.6,
-      "unitsSold": 2
-    },
-    {
-      "name": "Tucker's Frozen Raw C=6 Pork-Bison 20# BULK",
-      "revenue": 115.26,
+      "name": "OPEN FARM Dog Food BEEF FORMULA WITH ANCIENT GRAINS 22#",
+      "revenue": 96.78,
       "unitsSold": 1
     },
     {
-      "name": "BADLANDS RANCH - Superfood Complete - Beef - 64z",
-      "revenue": 107.64,
+      "name": "NBP DRY LID CHKN/SWPOT S/B 12#",
+      "revenue": 92.96,
       "unitsSold": 2
     },
     {
-      "name": "The Honest Kitchen - Whole Food Clusters - GRAIN FREE BEEF 20#",
-      "revenue": 103.3,
+      "name": "RedBarn Powerfood Fusion  Grain Free Beef 20#",
+      "revenue": 89.16,
       "unitsSold": 1
     }
   ],
   "hourlyCounts": [
     {
       "hour": 0,
-      "count": 1
-    },
-    {
-      "hour": 17,
-      "count": 11
-    },
-    {
-      "hour": 18,
       "count": 10
     },
     {
-      "hour": 19,
+      "hour": 1,
+      "count": 2
+    },
+    {
+      "hour": 3,
       "count": 9
     },
     {
-      "hour": 20,
+      "hour": 4,
+      "count": 7
+    },
+    {
+      "hour": 17,
       "count": 5
     },
     {
-      "hour": 21,
-      "count": 4
+      "hour": 18,
+      "count": 7
     },
     {
-      "hour": 22,
+      "hour": 19,
+      "count": 12
+    },
+    {
+      "hour": 20,
+      "count": 13
+    },
+    {
+      "hour": 21,
       "count": 6
     },
     {
+      "hour": 22,
+      "count": 10
+    },
+    {
       "hour": 23,
-      "count": 17
+      "count": 12
     }
   ],
-  "busiestHour": 23,
-  "busiestHourCount": 17,
+  "busiestHour": 20,
+  "busiestHourCount": 13,
   "newCustomers": null,
   "returningCustomers": null,
   "lowStockItems": [
-    {
-      "description": "Etta Says! Cookies Peanut Butter 5\"",
-      "sku": "210000027018",
-      "quantityOnHand": -18
-    },
     {
       "description": "Cash Payout",
       "sku": "P-12551",
@@ -166,28 +173,18 @@
       "quantityOnHand": -10
     },
     {
+      "description": "Natural Farms Treats Pig Ears Each",
+      "sku": "P-20261",
+      "quantityOnHand": -8
+    },
+    {
       "description": "Wellness COMPLETE HEALTH Cat Canned  - Turkey/Salmon - 3z",
       "sku": "P-1195",
       "quantityOnHand": -6
     },
     {
-      "description": "First Mate Cat Food GRAIN-FREE Chicken & Blueberries Formula 10#",
-      "sku": "210000026667",
-      "quantityOnHand": -6
-    },
-    {
-      "description": "MPF DRY VENTURE LID POLLOCK25#",
-      "sku": "210000027654",
-      "quantityOnHand": -6
-    },
-    {
       "description": "GREEN JUJU Fermented Supplements GOLDEN PASTE 6z - 6=CS",
       "sku": "210000031129",
-      "quantityOnHand": -6
-    },
-    {
-      "description": "INSTINCT CAT GRAIN FREE SPLIT CUP SALMON PATE 2.64z",
-      "sku": "210000034962",
       "quantityOnHand": -6
     },
     {
@@ -198,16 +195,6 @@
     {
       "description": "Bixbi Pocket Training Treats Bacon 6z",
       "sku": "P-24144",
-      "quantityOnHand": -4
-    },
-    {
-      "description": "PLAQUE OFF Dental Bones Veggie 17z - 13CT",
-      "sku": "P-26433",
-      "quantityOnHand": -4
-    },
-    {
-      "description": "Precious Cat - Cat Attract- R&R Respiratory Relief - Cat Litter 20#",
-      "sku": "P-9918",
       "quantityOnHand": -4
     },
     {
@@ -231,8 +218,13 @@
       "quantityOnHand": -4
     },
     {
-      "description": "Nature’s Variety - INSTINCT - RAW BOOST CHICKEN 20#",
-      "sku": "210000032974",
+      "description": "ACANA Canned Cat Food SALMON & CHICKEN CHUNKS IN BROTH 3z - CAN  single",
+      "sku": "210000031138",
+      "quantityOnHand": -4
+    },
+    {
+      "description": "Dr. Marty's Nature's Feast Essential Wellness - FREEZE-DRIED Cat Food Poultry 12z",
+      "sku": "210000032085",
       "quantityOnHand": -4
     },
     {
@@ -249,6 +241,26 @@
       "description": "A PUP ABOVE Fish 10# Bulk Box single 1#",
       "sku": "210000034541",
       "quantityOnHand": -4
+    },
+    {
+      "description": "HUGGLEKAT TOYS FLUFRFLC BALL 3 PKG",
+      "sku": "210000035042",
+      "quantityOnHand": -4
+    },
+    {
+      "description": "Primal Frozen Goat Milk- 32z",
+      "sku": "P-14703",
+      "quantityOnHand": -2
+    },
+    {
+      "description": "Small Batch - Turkey Batch BULK PATTIES - .5# - 36 count",
+      "sku": "P-20188",
+      "quantityOnHand": -2
+    },
+    {
+      "description": "The Honest Kitchen - Pour Overs Turkey & Pumpkin Stew 5.5z - Tetrapak",
+      "sku": "P-25307",
+      "quantityOnHand": -2
     }
   ]
 }

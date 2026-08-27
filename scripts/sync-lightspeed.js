@@ -84,16 +84,16 @@
  * below to match what your account actually returns — the console.log
  * of a sample raw item (below) will show the real shape.
  */
- 
+
 const LS_TOKEN_URL = 'https://cloud.lightspeedapp.com/oauth/access_token.php';
 const LS_API_BASE = 'https://api.lightspeedapp.com/API/Account';
- 
+
 const LOW_STOCK_THRESHOLD = Number(process.env.LOW_STOCK_THRESHOLD || 5);
 const HISTORY_WINDOW_DAYS = Number(process.env.HISTORY_WINDOW_DAYS || 84);
 const BACKFILL_DAYS = process.env.BACKFILL_DAYS ? Number(process.env.BACKFILL_DAYS) : 0;
 const BACKFILL_MAX_CHUNKS = Number(process.env.BACKFILL_MAX_CHUNKS || 600);
 const HISTORY_FILE = 'public/product-sales-history.json';
- 
+
 function requireEnv(name) {
   const value = process.env[name];
   if (!value) {
@@ -101,67 +101,111 @@ function requireEnv(name) {
   }
   return value;
 }
- 
+
 async function refreshAccessToken() {
   const clientId = requireEnv('LS_CLIENT_ID');
   const clientSecret = requireEnv('LS_CLIENT_SECRET');
   const refreshToken = requireEnv('LS_REFRESH_TOKEN');
- 
+
   const body = new URLSearchParams({
     grant_type: 'refresh_token',
     client_id: clientId,
     client_secret: clientSecret,
     refresh_token: refreshToken,
   });
- 
+
   const res = await fetch(LS_TOKEN_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body,
   });
- 
+
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`Token refresh failed (${res.status}): ${text}`);
   }
- 
+
   const json = await res.json();
   if (!json.access_token) {
     throw new Error(`Token refresh response missing access_token: ${JSON.stringify(json)}`);
   }
   return json.access_token;
 }
- 
+
+/**
+ * ---------------------------------------------------------------------
+ * ROUND 16 UPDATE: automatic token refresh-and-retry on a 401
+ * ---------------------------------------------------------------------
+ * A run can get a 401 "Token has expired" response on the very FIRST
+ * authenticated call, immediately after a successful refreshAccessToken()
+ * call — this has been observed in practice even when a token obtained
+ * the same way lasted 14+ minutes in a previous run without issue. The
+ * exact Lightspeed-side cause isn't confirmed (candidates: an
+ * unexpectedly short-lived access token, or two workflow runs
+ * overlapping and each refresh invalidating the other's token), but
+ * either way the fix is the same: treat a 401 as "the token this call
+ * was holding is no longer good," refresh once, and retry the same
+ * request with the new token — instead of failing the whole run over
+ * what is usually a one-off.
+ *
+ * To support that, every caller now passes a `tokenManager` (see
+ * createTokenManager() below) instead of a raw access-token string, so
+ * the refreshed token is shared with every call still to come in this
+ * run, not just the one that hit the 401.
+ */
+function createTokenManager(initialToken) {
+  let token = initialToken;
+  return {
+    get() {
+      return token;
+    },
+    async refresh() {
+      token = await refreshAccessToken();
+      return token;
+    },
+  };
+}
+
 /**
  * @param {Array<[string,string]>} paramPairs - array of [key, value] tuples
  * (rather than a plain object) so query params could repeat a key if ever
  * needed.
+ * @param {boolean} isRetryAfterRefresh - internal flag so a 401 is only
+ * ever retried once per call site (a second 401 after a fresh refresh
+ * means the refresh token itself is no longer valid, which needs a human
+ * to fix in Lightspeed's OAuth settings, not another retry).
  */
-async function apiGet(accessToken, accountId, path, paramPairs = []) {
+async function apiGet(tokenManager, accountId, path, paramPairs = [], isRetryAfterRefresh = false) {
   const url = new URL(`${LS_API_BASE}/${accountId}/${path}`);
   for (const [key, value] of paramPairs) {
     url.searchParams.append(key, value);
   }
- 
+
   const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: { Authorization: `Bearer ${tokenManager.get()}` },
   });
- 
+
   if (res.status === 429) {
     // Leaky-bucket rate limit hit. Back off and retry once.
     const retryAfter = Number(res.headers.get('Retry-After') || 5);
     await new Promise((r) => setTimeout(r, retryAfter * 1000));
-    return apiGet(accessToken, accountId, path, paramPairs);
+    return apiGet(tokenManager, accountId, path, paramPairs, isRetryAfterRefresh);
   }
- 
+
+  if (res.status === 401 && !isRetryAfterRefresh) {
+    console.warn(`Got 401 on GET ${path} — refreshing the access token and retrying once...`);
+    await tokenManager.refresh();
+    return apiGet(tokenManager, accountId, path, paramPairs, true);
+  }
+
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`GET ${path} failed (${res.status}): ${text}`);
   }
- 
+
   return res.json();
 }
- 
+
 /**
  * Fetches Sale records whose timeStamp falls in [rangeStart, rangeEnd)
  * (both Date objects, rangeEnd exclusive).
@@ -178,63 +222,63 @@ async function apiGet(accessToken, accountId, path, paramPairs = []) {
  * and for an optional multi-week backfill (see main()) — the single-day
  * case is just a range of one day.
  */
-async function fetchSalesForDateRange(accessToken, accountId, rangeStart, rangeEnd, maxChunks) {
+async function fetchSalesForDateRange(tokenManager, accountId, rangeStart, rangeEnd, maxChunks) {
   const limit = 100;
- 
+
   // Hard floor: never walk back further than 5 years before the range
   // start, no matter what. In normal operation this is never actually
   // hit — it's just a guardrail against ever accidentally scanning
   // deep/old history if something above passes a bad date.
   const earliestAllowed = new Date(rangeStart);
   earliestAllowed.setUTCFullYear(earliestAllowed.getUTCFullYear() - 5);
- 
-  const countProbe = await apiGet(accessToken, accountId, 'Sale.json', [
+
+  const countProbe = await apiGet(tokenManager, accountId, 'Sale.json', [
     ['limit', '1'],
     ['offset', '0'],
   ]);
   const totalCount = Number(countProbe['@attributes']?.count || 0);
- 
+
   const sales = [];
   let cursor = totalCount;
   let chunksFetched = 0;
   let hitFiveYearFloor = false;
- 
+
   while (cursor > 0 && chunksFetched < maxChunks) {
     const offset = Math.max(0, cursor - limit);
-    const page = await apiGet(accessToken, accountId, 'Sale.json', [
+    const page = await apiGet(tokenManager, accountId, 'Sale.json', [
       ['limit', String(limit)],
       ['offset', String(offset)],
       ['load_relations', '["SaleLines","SaleLines.Item"]'],
     ]);
- 
+
     const batch = Array.isArray(page.Sale) ? page.Sale : page.Sale ? [page.Sale] : [];
     chunksFetched += 1;
- 
+
     let oldestInBatch = null;
     for (const sale of batch) {
       const saleTime = new Date(sale.timeStamp);
       if (oldestInBatch === null || saleTime < oldestInBatch) oldestInBatch = saleTime;
- 
+
       const isCompleted = sale.completed === 'true' || sale.completed === true;
       if (isCompleted && saleTime >= rangeStart && saleTime < rangeEnd) {
         sales.push(sale);
       }
     }
- 
+
     if (offset === 0) break; // reached the very beginning of all sales
     if (oldestInBatch && oldestInBatch < rangeStart) break; // gone back far enough
     if (oldestInBatch && oldestInBatch < earliestAllowed) {
       hitFiveYearFloor = true;
       break; // refuse to walk back further than 5 years, no matter what
     }
- 
+
     cursor = offset;
- 
+
     if (chunksFetched % 25 === 0) {
       console.log(`  ...scanned ${chunksFetched} chunks so far (still walking back to ${rangeStart.toISOString().slice(0, 10)})`);
     }
   }
- 
+
   if (chunksFetched >= maxChunks) {
     console.warn(`Stopped after ${maxChunks} chunks — the requested window may need a larger search (raise BACKFILL_MAX_CHUNKS).`);
   }
@@ -243,32 +287,32 @@ async function fetchSalesForDateRange(accessToken, accountId, rangeStart, rangeE
       `Stopped at the 5-year lookback floor (${earliestAllowed.toISOString().slice(0, 10)}) without confirming the full target range was covered.`
     );
   }
- 
+
   return sales;
 }
- 
+
 /** Single-day convenience wrapper around fetchSalesForDateRange, used by the normal daily sync. */
-async function fetchSalesForDate(accessToken, accountId, targetDateStr) {
+async function fetchSalesForDate(tokenManager, accountId, targetDateStr) {
   const targetStart = new Date(`${targetDateStr}T00:00:00Z`);
   const targetEnd = new Date(targetStart.getTime() + 24 * 60 * 60 * 1000); // exclusive, next midnight UTC
-  return fetchSalesForDateRange(accessToken, accountId, targetStart, targetEnd, 30);
+  return fetchSalesForDateRange(tokenManager, accountId, targetStart, targetEnd, 30);
 }
- 
-async function fetchLowStockItems(accessToken, accountId) {
+
+async function fetchLowStockItems(tokenManager, accountId) {
   const lowStock = [];
   let offset = 0;
   const limit = 100;
- 
+
   while (true) {
-    const page = await apiGet(accessToken, accountId, 'Item.json', [
+    const page = await apiGet(tokenManager, accountId, 'Item.json', [
       ['limit', String(limit)],
       ['offset', String(offset)],
       ['load_relations', '["ItemShops"]'],
     ]);
- 
+
     const batch = Array.isArray(page.Item) ? page.Item : page.Item ? [page.Item] : [];
     if (batch.length === 0) break;
- 
+
     for (const item of batch) {
       const shops = Array.isArray(item.ItemShops?.ItemShop)
         ? item.ItemShops.ItemShop
@@ -284,18 +328,18 @@ async function fetchLowStockItems(accessToken, accountId) {
         });
       }
     }
- 
+
     if (batch.length < limit) break;
     offset += limit;
   }
- 
+
   return lowStock;
 }
- 
+
 // ---------------------------------------------------------------------
 // Product catalog + species inference
 // ---------------------------------------------------------------------
- 
+
 // Lightspeed has no native "species" field, so this infers one from the
 // category name and/or item description. Pet stores usually name
 // categories in a way this catches out of the box (e.g. "Dog Food",
@@ -310,7 +354,7 @@ const SPECIES_RULES = [
   { species: 'Bird', pattern: /\bbirds?\b|\bavian\b|\bparrot(s)?\b|\bparakeet(s)?\b|\bcockatiel(s)?\b/i },
   { species: 'Reptile & Aquatic', pattern: /\breptile(s)?\b|\baquarium(s)?\b|\bfish\b|\bturtle(s)?\b|\blizard(s)?\b|\bsnake(s)?\b|\baquatic\b/i },
 ];
- 
+
 function inferSpecies(category, description) {
   const text = `${category || ''} ${description || ''}`;
   for (const rule of SPECIES_RULES) {
@@ -318,19 +362,19 @@ function inferSpecies(category, description) {
   }
   return 'Other';
 }
- 
+
 function itemBrand(item) {
   const mfr = item.Manufacturer || item.manufacturer;
   const name = mfr && (mfr.name || mfr.Name);
   return name && String(name).trim() ? String(name).trim() : 'Unspecified';
 }
- 
+
 function itemCategory(item) {
   const cat = item.Category || item.category;
   const name = cat && (cat.name || cat.Name);
   return name && String(name).trim() ? String(name).trim() : 'Uncategorized';
 }
- 
+
 /**
  * Pulls the full active item catalog (paginated) with brand + category
  * relations loaded, so every brand/category the store carries shows up
@@ -343,26 +387,26 @@ function itemCategory(item) {
  * lookup above), archived items just come through too, which is a
  * harmless degradation, not a failure.
  */
-async function fetchAllItems(accessToken, accountId) {
+async function fetchAllItems(tokenManager, accountId) {
   const items = [];
   let offset = 0;
   const limit = 100;
   const MAX_PAGES = 300; // safety cap: 30,000 items, far above any real catalog
   let pages = 0;
   let sampleLogged = false;
- 
+
   while (pages < MAX_PAGES) {
-    const page = await apiGet(accessToken, accountId, 'Item.json', [
+    const page = await apiGet(tokenManager, accountId, 'Item.json', [
       ['limit', String(limit)],
       ['offset', String(offset)],
       ['archived', 'false'],
       ['load_relations', '["Category","Manufacturer"]'],
     ]);
     pages += 1;
- 
+
     const batch = Array.isArray(page.Item) ? page.Item : page.Item ? [page.Item] : [];
     if (batch.length === 0) break;
- 
+
     if (!sampleLogged) {
       // One-time raw sample so a wrong brand/category field-name guess is
       // easy to diagnose from the Actions log instead of failing silently.
@@ -370,7 +414,7 @@ async function fetchAllItems(accessToken, accountId) {
       console.log(JSON.stringify(batch[0]).slice(0, 800));
       sampleLogged = true;
     }
- 
+
     for (const item of batch) {
       if (item.archived === 'true' || item.archived === true) continue;
       const name = item.description || `Item #${item.itemID}`;
@@ -384,15 +428,15 @@ async function fetchAllItems(accessToken, accountId) {
         species: inferSpecies(category, name),
       });
     }
- 
+
     if (batch.length < limit) break;
     offset += limit;
   }
- 
+
   if (pages >= MAX_PAGES) {
     console.warn(`Stopped item catalog pull after ${MAX_PAGES} pages — catalog may be larger than expected.`);
   }
- 
+
   const unresolvedBrand = items.filter((it) => it.brand === 'Unspecified').length;
   if (items.length > 0 && unresolvedBrand / items.length > 0.5) {
     console.warn(
@@ -401,43 +445,43 @@ async function fetchAllItems(accessToken, accountId) {
       `check the sample raw item logged above and adjust itemBrand() in this script.`
     );
   }
- 
+
   return items;
 }
- 
+
 function aggregate(sales) {
   let totalRevenue = 0;
   let transactionCount = sales.length;
   const itemRevenue = new Map();
- 
+
   for (const sale of sales) {
     totalRevenue += Number(sale.total || 0);
- 
+
     const lines = Array.isArray(sale.SaleLines?.SaleLine)
       ? sale.SaleLines.SaleLine
       : sale.SaleLines?.SaleLine
       ? [sale.SaleLines.SaleLine]
       : [];
- 
+
     for (const line of lines) {
       const name = line.Item?.description || `Item #${line.itemID}`;
       const lineTotal = Number(line.calcTotal || line.unitPrice * line.unitQuantity || 0);
       itemRevenue.set(name, (itemRevenue.get(name) || 0) + lineTotal);
     }
   }
- 
+
   const topItems = [...itemRevenue.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
     .map(([name, revenue]) => ({ name, revenue: Math.round(revenue * 100) / 100 }));
- 
+
   return {
     totalRevenue: Math.round(totalRevenue * 100) / 100,
     transactionCount,
     topItems,
   };
 }
- 
+
 /**
  * Groups a list of Sale records (any date range) into a per-day,
  * per-item units/revenue map: { 'YYYY-MM-DD': { itemID: { qty, revenue } } }.
@@ -452,10 +496,10 @@ function aggregatePerItemByDate(sales) {
       : sale.SaleLines?.SaleLine
       ? [sale.SaleLines.SaleLine]
       : [];
- 
+
     if (!byDate[dateStr]) byDate[dateStr] = {};
     const dayMap = byDate[dateStr];
- 
+
     for (const line of lines) {
       const itemId = String(line.itemID);
       const qty = Number(line.unitQuantity || 0);
@@ -467,7 +511,7 @@ function aggregatePerItemByDate(sales) {
   }
   return byDate;
 }
- 
+
 async function loadHistory() {
   const fs = await import('node:fs/promises');
   try {
@@ -479,14 +523,14 @@ async function loadHistory() {
     return {};
   }
 }
- 
+
 function mergeHistory(history, perDateMap) {
   for (const [dateStr, dayMap] of Object.entries(perDateMap)) {
     history[dateStr] = dayMap; // full day is always known outright, so overwrite rather than add
   }
   return history;
 }
- 
+
 /** Drops any date keys older than HISTORY_WINDOW_DAYS before `mostRecentDateStr`. */
 function pruneHistory(history, mostRecentDateStr) {
   const cutoff = new Date(`${mostRecentDateStr}T00:00:00Z`);
@@ -496,7 +540,7 @@ function pruneHistory(history, mostRecentDateStr) {
   }
   return history;
 }
- 
+
 /**
  * Combines the item catalog with the rolling sales history into the
  * dashboard-ready `products` array: every active item, with real
@@ -524,7 +568,7 @@ function computeProductStats(history, catalog) {
     priorStart = new Date(recentStart);
     priorStart.setUTCDate(priorStart.getUTCDate() - 28); // the 4 weeks before that
   }
- 
+
   const totals = new Map(); // itemID -> { qty, revenue, recentQty, recentRevenue, priorQty, priorRevenue }
   for (const dateStr of dates) {
     const d = new Date(`${dateStr}T00:00:00Z`);
@@ -545,14 +589,14 @@ function computeProductStats(history, catalog) {
       }
     }
   }
- 
+
   function pctChange(curr, prev) {
     if (!prev) return curr > 0 ? 100 : 0;
     return Math.round(((curr - prev) / Math.abs(prev)) * 1000) / 10;
   }
- 
+
   const haveFullTrendWindow = windowDays >= 56; // need both 4-week halves
- 
+
   return catalog.map((item) => {
     const t = totals.get(item.itemID);
     const weeks = windowDays > 0 ? windowDays / 7 : 1;
@@ -576,46 +620,46 @@ function computeProductStats(history, catalog) {
     };
   });
 }
- 
+
 async function main() {
   const accountId = requireEnv('LS_ACCOUNT_ID');
- 
+
   // Report on "yesterday" (UTC) since the job runs once daily, typically
   // early morning, and the full previous day is what's fully closed out.
   const now = new Date();
   const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const targetDateStr = yesterday.toISOString().slice(0, 10);
- 
+
   console.log(`Syncing Lightspeed data for ${targetDateStr}...`);
- 
-  const accessToken = await refreshAccessToken();
-  const sales = await fetchSalesForDate(accessToken, accountId, targetDateStr);
-  const lowStock = await fetchLowStockItems(accessToken, accountId);
+
+  const tokenManager = createTokenManager(await refreshAccessToken());
+  const sales = await fetchSalesForDate(tokenManager, accountId, targetDateStr);
+  const lowStock = await fetchLowStockItems(tokenManager, accountId);
   const summary = aggregate(sales);
- 
+
   console.log('Fetching full item catalog (brand/category)...');
-  const catalog = await fetchAllItems(accessToken, accountId);
+  const catalog = await fetchAllItems(tokenManager, accountId);
   console.log(`Catalog: ${catalog.length} active items across ${new Set(catalog.map((i) => i.brand)).size} brands.`);
- 
+
   let history = await loadHistory();
- 
+
   if (BACKFILL_DAYS > 0) {
     console.log(`Backfill requested: pulling the ${BACKFILL_DAYS} days before ${targetDateStr}. This can take a while...`);
     const targetStart = new Date(`${targetDateStr}T00:00:00Z`);
     const backfillStart = new Date(targetStart);
     backfillStart.setUTCDate(backfillStart.getUTCDate() - BACKFILL_DAYS);
-    const backfillSales = await fetchSalesForDateRange(accessToken, accountId, backfillStart, targetStart, BACKFILL_MAX_CHUNKS);
+    const backfillSales = await fetchSalesForDateRange(tokenManager, accountId, backfillStart, targetStart, BACKFILL_MAX_CHUNKS);
     console.log(`Backfill pulled ${backfillSales.length} sales across ${BACKFILL_DAYS} days.`);
     history = mergeHistory(history, aggregatePerItemByDate(backfillSales));
   }
- 
+
   // Always merge in yesterday's sales too (reusing the fetch already done
   // above for the existing totalRevenue/transactionCount summary).
   history = mergeHistory(history, aggregatePerItemByDate(sales));
   history = pruneHistory(history, targetDateStr);
- 
+
   const products = computeProductStats(history, catalog);
- 
+
   const output = {
     generatedAt: now.toISOString(),
     reportDate: targetDateStr,
@@ -623,15 +667,15 @@ async function main() {
     lowStockItems: lowStock,
     products,
   };
- 
+
   const fs = await import('node:fs/promises');
   await fs.mkdir('public', { recursive: true });
   await fs.writeFile('public/data.json', JSON.stringify(output, null, 2));
   await fs.writeFile(HISTORY_FILE, JSON.stringify(history));
- 
+
   console.log(`Wrote public/data.json (${products.length} products) and ${HISTORY_FILE} (${Object.keys(history).length} days of history).`);
 }
- 
+
 main().catch((err) => {
   console.error(err);
   process.exit(1);

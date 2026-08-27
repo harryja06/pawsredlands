@@ -1872,6 +1872,13 @@ function renderReport(data) {
   if (window.__refreshProductPerformance && Array.isArray(data.products) && data.products.length) {
     window.__refreshProductPerformance(data.products);
   }
+
+  // This Week's Performance / Overview Daily view: once the sync script has
+  // accumulated at least two real days in public/store-sales-history.json,
+  // data.dailyTotals carries them — swap them in for the static sample dates.
+  if (window.__refreshDailyPerformance && Array.isArray(data.dailyTotals) && data.dailyTotals.length) {
+    window.__refreshDailyPerformance(data.dailyTotals);
+  }
 }
 
 fetch('data.json', { cache: 'no-store' })
@@ -2078,6 +2085,13 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
   function renderCaption(el, deltaPrev, deltaYear, prevLabel, yearLabel) {
     if (!el) return;
     function seg(d, label) {
+      // Round 18: a real series with no comparison basis yet (e.g. real "vs last
+      // year" before a year of history exists) passes null/undefined here rather
+      // than a fabricated number — show an honest dash instead of treating a
+      // missing value as zero.
+      if (typeof d !== 'number' || isNaN(d)) {
+        return '<span class="delta-inline no-data-yet">&mdash;<span class="vs-label">vs ' + label + '</span></span>';
+      }
       var dir = d >= 0 ? 'up' : 'down';
       var arrow = d >= 0 ? '&#9650;' : '&#9660;';
       return '<span class="delta-inline ' + dir + '">' + arrow + ' ' + Math.abs(d).toFixed(1) + '%<span class="vs-label">vs ' + label + '</span></span>';
@@ -2223,10 +2237,15 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
   // than looking a period up in METRIC_DATA), so the same row-building logic can serve a
   // widget's normal shared periods as well as a scoped-down series (e.g. the current
   // week's 7 days, or one hourly-window average) using its own prev/year deltas.
-  function buildRowsFromSeries(values, labels, aggPrev, aggYear) {
+  function buildRowsFromSeries(values, labels, aggPrev, aggYear, opts) {
+    var noYear = opts && opts.noYear; // Round 18: real daily data has no real "vs last
+    // year" comparison yet (the rolling history window is ~12 weeks, not a year), so
+    // callers backing a real series pass noYear instead of falling through to the
+    // YEAR_WAVE sample oscillation, which would otherwise silently paint a fabricated
+    // number that looks just as real as everything else in the row.
     return values.map(function(v, i) {
       var prevPct = i === 0 ? aggPrev : pctChange(v, values[i - 1]);
-      var yearPct = aggYear + YEAR_WAVE[i % YEAR_WAVE.length];
+      var yearPct = noYear ? null : aggYear + YEAR_WAVE[i % YEAR_WAVE.length];
       return { label: labels[i], value: v, prevPct: prevPct, yearPct: yearPct };
     });
   }
@@ -2279,6 +2298,50 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
     return rev.map(function(v, i) { return txn[i] > 0 ? v / txn[i] : 0; });
   }
 
+  // ---------------------------------------------------------------------
+  // Round 18: real daily totals for "This Week's Performance" and the
+  // Overview tab's own Daily view.
+  // ---------------------------------------------------------------------
+  // Both widgets' "daily" period reads from the same PERIOD_LABELS.daily /
+  // METRIC_DATA.*.values.daily arrays above — those used to be a fixed,
+  // never-advancing 14-day sample ending Aug 22. Once the sync script has
+  // accumulated at least two real days in public/store-sales-history.json
+  // (surfaced as data.dailyTotals), this replaces those arrays with real
+  // dates and real revenue/transactions/avg-ticket figures, so both widgets
+  // show real, current days instead of a frozen sample window.
+  //
+  // Real "vs last year" isn't available yet — the rolling history file only
+  // keeps a ~12-week window, not a year — so REAL_DAILY_ACTIVE is checked
+  // directly in render() to show an honest "no data yet" dash there instead
+  // of routing through the YEAR_WAVE sample oscillation (see
+  // buildRowsFromSeries's noYear option and renderCaption's null handling).
+  var REAL_DAILY_ACTIVE = false;
+  var DAILY_VIEW_MAX_DAYS = 30; // cap how many real days the "daily" chart/table show,
+  // even though the underlying history file keeps up to ~12 weeks for other uses.
+
+  window.__refreshDailyPerformance = function(dailyTotals) {
+    if (!Array.isArray(dailyTotals) || dailyTotals.length < 2) return; // need at least
+    // two real days to show a meaningful chart/day-over-day comparison; before that,
+    // the sample stays in place rather than showing a single lonely point.
+    var recent = dailyTotals.slice(-DAILY_VIEW_MAX_DAYS);
+    var labels = recent.map(function(d) {
+      return new Date(d.date + 'T00:00:00Z').toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    });
+    PERIOD_LABELS.daily = labels;
+    METRIC_DATA.revenue.values.daily = recent.map(function(d) { return d.revenue; });
+    METRIC_DATA.transactions.values.daily = recent.map(function(d) { return d.transactionCount; });
+    METRIC_DATA.avgTicket.values.daily = recent.map(function(d) { return d.avgTicket; });
+
+    var last = recent[recent.length - 1];
+    var prev = recent[recent.length - 2];
+    METRIC_DATA.revenue.deltas.daily = { prev: pctChange(last.revenue, prev.revenue) || 0, year: null };
+    METRIC_DATA.transactions.deltas.daily = { prev: pctChange(last.transactionCount, prev.transactionCount) || 0, year: null };
+    METRIC_DATA.avgTicket.deltas.daily = { prev: pctChange(last.avgTicket, prev.avgTicket) || 0, year: null };
+
+    REAL_DAILY_ACTIVE = true;
+    if (window.__rerenderPeriodWidgets) window.__rerenderPeriodWidgets();
+  };
+
   function initPeriodWidget(rootId, defaultPeriod, defaultMetric, opts) {
     opts = opts || {};
     var root = document.getElementById(rootId);
@@ -2320,15 +2383,29 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
           priorVals = hourlySrc.priorWeek;
           labels = PERIOD_LABELS.hourly || [];
         }
+        // Round 18: with real data, only trust the "vs prior week" comparison once a
+        // full prior 7-day window actually exists — comparing this week's 7 days
+        // against a SHORTER partial prior window (all that's available in the first
+        // couple of weeks after this fix goes live) would understate/inflate the
+        // percentage rather than genuinely reflect a week-over-week change. Until then,
+        // show an honest dash for the prior-week comparison too, same as the
+        // vs-last-year column already does.
+        var realDailyPartialWindow = REAL_DAILY_ACTIVE && period === 'daily' && priorVals.length < 7;
         var thisSum = values.reduce(function(a, b) { return a + b; }, 0);
         var priorSum = priorVals.reduce(function(a, b) { return a + b; }, 0);
-        deltaPrev = priorSum > 0 ? pctChange(thisSum, priorSum) : 0;
+        deltaPrev = realDailyPartialWindow ? null : (priorSum > 0 ? pctChange(thisSum, priorSum) : 0);
         deltaYear = (md0.deltas.daily || { year: 0 }).year;
         prevLabel = 'prior week';
         yearLabel = 'last year';
+        // Real daily data also has no real "vs last year" comparison yet (see
+        // REAL_DAILY_ACTIVE above) — show an honest dash per row instead of routing
+        // deltaYear through the YEAR_WAVE sample oscillation (which would otherwise
+        // silently turn a null deltaYear into small nonzero-looking numbers, since
+        // `null + x` coerces to `x` in JS rather than staying "no data").
+        var realNoYear = REAL_DAILY_ACTIVE && period === 'daily';
         rows = values.map(function(v, i) {
-          var pPct = priorVals[i] > 0 ? pctChange(v, priorVals[i]) : null;
-          var yPct = deltaYear + YEAR_WAVE[i % YEAR_WAVE.length];
+          var pPct = realDailyPartialWindow ? null : (priorVals[i] > 0 ? pctChange(v, priorVals[i]) : null);
+          var yPct = realNoYear ? null : deltaYear + YEAR_WAVE[i % YEAR_WAVE.length];
           return { label: labels[i], value: v, prevPct: pPct, yearPct: yPct };
         });
       } else if (opts.hourlyVsAvg4wk && period === 'hourly') {
@@ -2362,7 +2439,7 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
         var meta = PERIOD_META[period];
         prevLabel = meta.prevLabel;
         yearLabel = meta.yearLabel;
-        rows = buildRowsFromSeries(values, labels, deltaPrev, deltaYear);
+        rows = buildRowsFromSeries(values, labels, deltaPrev, deltaYear, { noYear: REAL_DAILY_ACTIVE && period === 'daily' });
       }
       renderBars(chartEl, labelsEl, values, labels, metricFormatter(metric));
       renderCaption(captionEl, deltaPrev, deltaYear, prevLabel, yearLabel);
@@ -2398,7 +2475,18 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
       });
     }
     render();
+
+    // Round 18: so a __refreshDailyPerformance() call arriving after this widget has
+    // already rendered (the normal case — data.json's fetch resolves after first paint)
+    // can make it re-render with the real daily data instead of the sample it started
+    // with, without this widget needing to know anything about that hook itself.
+    window.__periodRenderers = window.__periodRenderers || [];
+    window.__periodRenderers.push(render);
   }
+
+  window.__rerenderPeriodWidgets = function() {
+    (window.__periodRenderers || []).forEach(function(fn) { fn(); });
+  };
 
   initPeriodWidget('perf-trend-widget', 'daily', 'revenue', { weekScoped: true });
   initPeriodWidget('history-trend-widget', 'daily', 'revenue', { hourlyVsAvg4wk: true });

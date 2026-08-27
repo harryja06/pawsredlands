@@ -1,0 +1,51 @@
+name: Daily Lightspeed sync
+
+on:
+  schedule:
+    # Runs at 07:00 UTC every day (adjust to taste). GitHub Actions cron
+    # can lag a few minutes at busy times, which is fine for a daily job.
+    - cron: '0 7 * * *'
+  workflow_dispatch: # lets you trigger a run manually from the Actions tab
+    inputs:
+      backfill_days:
+        description: >
+          Optional one-time backfill: pull this many days of sales history
+          (e.g. 84 for 12 weeks) to seed real product trend data immediately
+          instead of waiting for the daily job to accumulate it. Leave blank
+          for a normal run. This makes the run much slower/heavier on the
+          Lightspeed API — only fill this in when you actually want a
+          backfill, not on every manual run.
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Lightspeed sync
+        env:
+          LS_CLIENT_ID: ${{ secrets.LS_CLIENT_ID }}
+          LS_CLIENT_SECRET: ${{ secrets.LS_CLIENT_SECRET }}
+          LS_REFRESH_TOKEN: ${{ secrets.LS_REFRESH_TOKEN }}
+          LS_ACCOUNT_ID: ${{ secrets.LS_ACCOUNT_ID }}
+          BACKFILL_DAYS: ${{ github.event.inputs.backfill_days }}
+        run: node scripts/sync-lightspeed.js
+
+      - name: Commit updated data file
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data.json public/product-sales-history.json
+          git diff --cached --quiet && echo "No changes to commit" || git commit -m "Daily Lightspeed data sync"
+          git push

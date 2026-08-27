@@ -98,6 +98,35 @@ const STORE_HISTORY_FILE = 'public/store-sales-history.json'; // ROUND 18: whole
 // per-item breakdown — feeds data.dailyTotals for the dashboard's real "This
 // Week's Performance" / Overview daily view.
 
+// ROUND 20/21/22: opt-in historical pull for real Monthly totals (see
+// fetchHistoricalTotals()'s comment below). Unset by default — this is a
+// manual, occasional workflow_dispatch input, never part of the daily cron.
+// ROUND 21: dropped the Yearly view entirely — the report now goes no deeper
+// than Monthly. ROUND 22: the report shows only the most recent
+// MONTHLY_VIEW_MAX_MONTHS (12, i.e. 1 year) so every shown month can carry a
+// genuine "vs same month last year" figure — that requires the underlying
+// pull to reach back twice as deep (HISTORICAL_MONTHS=24, i.e. 2 years)
+// so each shown month's year-ago counterpart (12 months further back) is
+// still inside the pulled history, even for the oldest of the 12 shown
+// months. (fetchHistoricalTotals() still buckets a `yearly` total alongside
+// `monthly` internally in period-totals-state.json — that's harmless, free
+// bookkeeping from the same walk — it's just never surfaced to the
+// dashboard anymore.)
+const HISTORICAL_MONTHS = process.env.HISTORICAL_MONTHS ? Number(process.env.HISTORICAL_MONTHS) : 0;
+const HISTORICAL_MAX_CHUNKS = Number(process.env.HISTORICAL_MAX_CHUNKS || 3000);
+const PERIOD_TOTALS_STATE_FILE = 'public/period-totals-state.json';
+const MONTHLY_VIEW_MAX_MONTHS = 12; // ROUND 22: only the most recent 12 months
+// (1 year) are shown on the dashboard, regardless of how much more history
+// the state file has accumulated. Pulling the standard/recommended
+// HISTORICAL_MONTHS=24 (2 years) gives EVERY one of these 12 shown months a
+// real "vs same month last year" comparison — each shown month's year-ago
+// counterpart is 12-24 months back, which is still within a 24-month-deep
+// pull. (A shallower pull, e.g. HISTORICAL_MONTHS=12, would leave every shown
+// month without a year-ago match — always request at least 24.)
+const HOURLY_TRAILING_DAYS = Number(process.env.HOURLY_TRAILING_DAYS || 28); // how many
+// of the most recent real days' hourly buckets to average for the Overview
+// tab's "today vs trailing 4 weeks" Hourly comparison.
+
 function requireEnv(name) {
   const value = process.env[name];
   if (!value) {
@@ -351,6 +380,209 @@ async function fetchSalesForDate(tokenManager, accountId, targetDateStr) {
   return fetchSalesForDateRange(tokenManager, accountId, targetStart, targetEnd, 30);
 }
 
+/**
+ * ---------------------------------------------------------------------
+ * ROUND 20/21 UPDATE: real Monthly totals, pulled directly (up to 2 years)
+ * ---------------------------------------------------------------------
+ * A real Monthly view — with genuine year-over-year comparisons — needs FAR
+ * more history than the ~12-week rolling window the daily sync keeps
+ * (HISTORY_WINDOW_DAYS). Lightspeed's API has no report/aggregate endpoint
+ * (confirmed above), so getting real monthly totals means walking the FULL
+ * transaction history the same way fetchSalesForDateRange() does, just
+ * further back — this can mean tens of thousands of records for a store
+ * this size, so a few things make it practical instead of another
+ * 401-hang-style disaster:
+ *
+ *   1. Lightweight requests: no load_relations at all (SaleLines/Item/
+ *      Customer aren't needed for period totals — only sale.total and
+ *      sale.timeStamp are), which meaningfully shrinks each page's
+ *      response versus the daily sync's relation-heavy pull.
+ *   2. Streaming buckets instead of an in-memory array of every sale —
+ *      a 2-year pull could otherwise be tens of thousands of records held
+ *      in RAM at once.
+ *   3. Checkpointed and resumable: progress (the running per-year/
+ *      per-month sums — yes, still per-YEAR too internally, see
+ *      MONTHLY_VIEW_MAX_MONTHS's comment above for why — and the offset to
+ *      resume from) is saved to public/period-totals-state.json every 50
+ *      chunks, so an interrupted run — or one that hits
+ *      HISTORICAL_MAX_CHUNKS's per-run safety cap — picks up where it left
+ *      off on the next run instead of starting the whole walk over. Re-run
+ *      the workflow with the same HISTORICAL_MONTHS input as many times as
+ *      it takes; each run continues, it doesn't restart.
+ *
+ * This is opt-in (HISTORICAL_MONTHS, unset by default) and meant to be
+ * triggered manually via workflow_dispatch, NOT left running on the daily
+ * cron — see daily-sync.yml. The standard depth is still 24 (2 years) —
+ * ROUND 22: the dashboard now shows only the most recent
+ * MONTHLY_VIEW_MAX_MONTHS (12) months, but the pull still needs to reach
+ * twice that deep so every one of those 12 shown months has a real
+ * same-month-last-year figure (its year-ago counterpart, 12-24 months back,
+ * falls inside a 24-month-deep pull).
+ */
+async function fetchHistoricalTotals(tokenManager, accountId, rangeStart, maxChunks, state) {
+  const limit = 100;
+
+  // If the requested range now reaches further back than whatever a prior
+  // (possibly partial or complete) run covered, the saved progress no longer
+  // covers the full window that's being asked for — restart the walk from
+  // the most recent sale rather than silently reporting a too-short range as
+  // if it were the full requested depth.
+  const rangeStartStr = rangeStart.toISOString().slice(0, 10);
+  if (state.rangeStartUsed && new Date(state.rangeStartUsed) > rangeStart) {
+    console.log(
+      `Historical totals: requested range (back to ${rangeStartStr}) now reaches further than ` +
+      `the saved progress (back to ${state.rangeStartUsed}) — restarting the walk from the most recent sale.`
+    );
+    state.yearly = {};
+    state.monthly = {};
+    state.cursor = null;
+    state.complete = false;
+  }
+  state.rangeStartUsed = rangeStartStr;
+
+  if (state.complete) {
+    console.log('Historical totals: already walked back to the full requested range in a prior run — nothing new to fetch.');
+    return state;
+  }
+
+  let cursor = state.cursor;
+  if (cursor === null || cursor === undefined) {
+    const countProbe = await apiGet(tokenManager, accountId, 'Sale.json', [
+      ['limit', '1'],
+      ['offset', '0'],
+    ]);
+    cursor = Number(countProbe['@attributes']?.count || 0);
+    console.log(`Historical totals: starting a fresh walk from the most recent of ${cursor} total sales, back to ${rangeStartStr}.`);
+  } else {
+    console.log(`Historical totals: resuming a prior walk from offset ${cursor}, back to ${rangeStartStr}.`);
+  }
+
+  let chunksFetched = 0;
+  let oldestSeen = null;
+
+  while (cursor > 0 && chunksFetched < maxChunks) {
+    const offset = Math.max(0, cursor - limit);
+    const page = await apiGet(tokenManager, accountId, 'Sale.json', [
+      ['limit', String(limit)],
+      ['offset', String(offset)],
+      // No load_relations here on purpose — only sale.total/timeStamp/completed
+      // are needed for period totals, so this stays as light as possible over
+      // what can be a very large pull.
+    ]);
+    chunksFetched += 1;
+
+    const batch = Array.isArray(page.Sale) ? page.Sale : page.Sale ? [page.Sale] : [];
+    let oldestInBatch = null;
+    for (const sale of batch) {
+      const saleTime = new Date(sale.timeStamp);
+      if (oldestInBatch === null || saleTime < oldestInBatch) oldestInBatch = saleTime;
+
+      const isCompleted = sale.completed === 'true' || sale.completed === true;
+      if (!isCompleted) continue;
+
+      const revenue = Number(sale.total || 0);
+      const year = String(saleTime.getUTCFullYear());
+      const monthKey = saleTime.toISOString().slice(0, 7); // YYYY-MM
+
+      if (!state.yearly[year]) state.yearly[year] = { revenue: 0, transactionCount: 0 };
+      state.yearly[year].revenue += revenue;
+      state.yearly[year].transactionCount += 1;
+
+      if (!state.monthly[monthKey]) state.monthly[monthKey] = { revenue: 0, transactionCount: 0 };
+      state.monthly[monthKey].revenue += revenue;
+      state.monthly[monthKey].transactionCount += 1;
+    }
+    if (oldestInBatch && (oldestSeen === null || oldestInBatch < oldestSeen)) oldestSeen = oldestInBatch;
+
+    const reachedBeginning = offset === 0;
+    const reachedRangeStart = oldestInBatch && oldestInBatch < rangeStart;
+    cursor = offset;
+
+    if (reachedBeginning || reachedRangeStart) {
+      state.complete = true;
+      state.cursor = null;
+      break;
+    }
+
+    if (chunksFetched % 50 === 0) {
+      state.cursor = cursor;
+      await savePeriodTotalsState(state);
+      console.log(
+        `  ...historical totals: ${chunksFetched} chunks this run, back to ${oldestSeen ? oldestSeen.toISOString().slice(0, 10) : '?'} (checkpoint saved).`
+      );
+    }
+  }
+
+  if (!state.complete) {
+    state.cursor = cursor;
+    console.log(
+      `Historical totals: stopped after ${chunksFetched} chunks this run, back to ` +
+      `${oldestSeen ? oldestSeen.toISOString().slice(0, 10) : '?'} — not yet back to ${rangeStartStr}. ` +
+      `Re-run the workflow with the same HISTORICAL_MONTHS input to continue from here.`
+    );
+  } else {
+    console.log(`Historical totals: reached the full requested range (back to ${rangeStartStr}).`);
+  }
+
+  return state;
+}
+
+async function savePeriodTotalsState(state) {
+  const fs = await import('node:fs/promises');
+  await fs.writeFile(PERIOD_TOTALS_STATE_FILE, JSON.stringify(state));
+}
+
+async function loadPeriodTotalsState() {
+  const raw = await loadHistoryFile(PERIOD_TOTALS_STATE_FILE);
+  return {
+    yearly: raw.yearly || {},
+    monthly: raw.monthly || {},
+    cursor: raw.cursor === undefined ? null : raw.cursor,
+    complete: !!raw.complete,
+    rangeStartUsed: raw.rangeStartUsed || null,
+  };
+}
+
+/**
+ * Builds the dashboard-facing monthlyTotals array (most recent MONTHLY_VIEW_MAX_MONTHS
+ * months — ROUND 22: 12, i.e. 1 year, so the report reads as a clean trailing-12-months
+ * view) from the full accumulated period-totals state. Each entry also carries
+ * yearAgoRevenue/yearAgoTransactionCount — looked up against the FULL state.monthly
+ * map (not just the slice being returned), so the dashboard can show a real "vs same
+ * month last year" per row without needing extra months exposed in the output just
+ * to make that one lookup possible. Both are null only when that month-12-back key
+ * doesn't exist in the full state — with the standard HISTORICAL_MONTHS=24 pull (2
+ * years), that never happens for any of the 12 shown months: each shown month's
+ * year-ago counterpart is 12-24 months back, still within a 24-month-deep pull, so
+ * ROUND 22 gives every one of the 12 shown rows a genuine year-over-year figure
+ * (only a shallower-than-recommended pull, e.g. HISTORICAL_MONTHS=12, would leave
+ * these null).
+ *
+ * ROUND 21: this used to have a buildYearlyTotalsOutput() sibling for a Yearly view;
+ * that view was dropped per the user's request to keep the report at Monthly-at-most
+ * granularity, so only this one remains. periodState.yearly is still populated by
+ * fetchHistoricalTotals() (harmless, essentially free bookkeeping from the same
+ * walk) — it's just never read into the dashboard-facing output anymore.
+ */
+function buildMonthlyTotalsOutput(periodState) {
+  const monthKeys = Object.keys(periodState.monthly).sort();
+  const shown = monthKeys.slice(-MONTHLY_VIEW_MAX_MONTHS);
+  return shown.map((monthKey) => {
+    const m = periodState.monthly[monthKey];
+    const [y, mo] = monthKey.split('-').map(Number);
+    const yearAgoKey = `${y - 1}-${String(mo).padStart(2, '0')}`;
+    const yearAgo = periodState.monthly[yearAgoKey] || null;
+    return {
+      month: monthKey,
+      revenue: Math.round(m.revenue * 100) / 100,
+      transactionCount: m.transactionCount,
+      avgTicket: m.transactionCount > 0 ? Math.round((m.revenue / m.transactionCount) * 100) / 100 : 0,
+      yearAgoRevenue: yearAgo ? Math.round(yearAgo.revenue * 100) / 100 : null,
+      yearAgoTransactionCount: yearAgo ? yearAgo.transactionCount : null,
+    };
+  });
+}
+
 async function fetchLowStockItems(tokenManager, accountId) {
   const lowStock = [];
   let offset = 0;
@@ -540,16 +772,21 @@ function aggregate(sales, catalogById, costDataAvailable) {
   const brandRevenue = new Map();
   const categoryRevenue = new Map();
   const hourlyCounts = new Map(); // hour (0-23, UTC) -> transaction count
+  const hourlyRevenue = new Map(); // hour (0-23, UTC) -> revenue — ROUND 20: added
+  // alongside the existing count so the dashboard's Hourly view can show a real
+  // revenue/avg-ticket pattern, not just transaction count.
   const seenCustomersToday = new Set();
   let newCustomers = 0;
   let returningCustomers = 0;
 
   for (const sale of sales) {
-    totalRevenue += Number(sale.total || 0);
+    const saleTotal = Number(sale.total || 0);
+    totalRevenue += saleTotal;
 
     const saleDate = new Date(sale.timeStamp);
     const hour = saleDate.getUTCHours();
     hourlyCounts.set(hour, (hourlyCounts.get(hour) || 0) + 1);
+    hourlyRevenue.set(hour, (hourlyRevenue.get(hour) || 0) + saleTotal);
 
     // New vs returning: a sale with no attached customer (walk-in, or the
     // account's generic customerID 0) counts toward transactionCount but
@@ -613,7 +850,7 @@ function aggregate(sales, catalogById, costDataAvailable) {
   let busiestHourCount = 0;
   const hourlyCountsArr = [];
   for (const [hour, count] of hourlyCounts.entries()) {
-    hourlyCountsArr.push({ hour, count });
+    hourlyCountsArr.push({ hour, count, revenue: Math.round((hourlyRevenue.get(hour) || 0) * 100) / 100 });
     if (count > busiestHourCount) {
       busiestHourCount = count;
       busiestHour = hour;
@@ -647,21 +884,42 @@ function aggregate(sales, catalogById, costDataAvailable) {
 
 /**
  * Groups a list of Sale records into whole-store daily totals:
- * { 'YYYY-MM-DD': { revenue, transactionCount, cost } }. This is the
- * store-wide counterpart to aggregatePerItemByDate() below — same
- * per-day bucketing, just summed across the whole store instead of
- * per item — used to feed the dashboard's "This Week's Performance"
- * and Overview-tab daily view with real dates and real figures instead
- * of the static sample arrays those used to run on entirely.
+ * { 'YYYY-MM-DD': { revenue, transactionCount, cost, hourly: [{revenue,
+ * transactionCount} x24] } }. This is the store-wide counterpart to
+ * aggregatePerItemByDate() below — same per-day bucketing, just summed
+ * across the whole store instead of per item — used to feed the
+ * dashboard's "This Week's Performance" and Overview-tab daily view with
+ * real dates and real figures instead of the static sample arrays those
+ * used to run on entirely.
+ *
+ * ROUND 20: added the per-day `hourly` breakdown (24 buckets, one per
+ * UTC hour) alongside the existing daily total — this is what lets the
+ * dashboard's Hourly views (both "This Week" vs. the prior week, and the
+ * Overview tab's today-vs-trailing-4-weeks) show a REAL hour-by-hour
+ * pattern instead of the old fabricated shape, without any extra API
+ * calls: it's computed from the exact same sales already being pulled
+ * for the daily sync and for a BACKFILL_DAYS backfill.
  */
 function aggregateDailyTotals(sales, catalogById) {
   const byDate = {};
   for (const sale of sales) {
-    const dateStr = new Date(sale.timeStamp).toISOString().slice(0, 10);
-    if (!byDate[dateStr]) byDate[dateStr] = { revenue: 0, transactionCount: 0, cost: 0 };
+    const saleDate = new Date(sale.timeStamp);
+    const dateStr = saleDate.toISOString().slice(0, 10);
+    const hour = saleDate.getUTCHours();
+    if (!byDate[dateStr]) {
+      byDate[dateStr] = {
+        revenue: 0,
+        transactionCount: 0,
+        cost: 0,
+        hourly: Array.from({ length: 24 }, () => ({ revenue: 0, transactionCount: 0 })),
+      };
+    }
     const day = byDate[dateStr];
-    day.revenue += Number(sale.total || 0);
+    const saleTotal = Number(sale.total || 0);
+    day.revenue += saleTotal;
     day.transactionCount += 1;
+    day.hourly[hour].revenue += saleTotal;
+    day.hourly[hour].transactionCount += 1;
 
     const lines = Array.isArray(sale.SaleLines?.SaleLine)
       ? sale.SaleLines.SaleLine
@@ -890,8 +1148,62 @@ async function main() {
           costDataAvailable && revenue > 0
             ? Math.round(((revenue - day.cost) / revenue) * 1000) / 10
             : null,
+        // ROUND 20: real per-hour breakdown for this day, rounded for the same
+        // reason everything else here is — feeds the dashboard's real Hourly
+        // views (see aggregateDailyTotals()'s comment).
+        hourly: (day.hourly || []).map((h) => ({
+          revenue: Math.round(h.revenue * 100) / 100,
+          transactionCount: h.transactionCount,
+        })),
       };
     });
+
+  // ROUND 20: trailing-N-day average per hour, real counterpart to the old
+  // fabricated HOURLY_WINDOW_DATA sample — averages whatever of the most
+  // recent HOURLY_TRAILING_DAYS real days actually have hourly data (which,
+  // right after this ships, may be fewer than HOURLY_TRAILING_DAYS; it grows
+  // in day by day, same as everything else here).
+  const recentDaysWithHourly = dailyTotals.slice(-HOURLY_TRAILING_DAYS).filter((d) => Array.isArray(d.hourly) && d.hourly.length === 24);
+  let hourlyTrailingAvg = [];
+  if (recentDaysWithHourly.length >= 7) {
+    // Require at least a week of real days before showing a "trailing average" —
+    // averaging over just 1-2 days isn't a meaningful baseline to compare "today" against.
+    hourlyTrailingAvg = Array.from({ length: 24 }, (_, hour) => {
+      const revenueSum = recentDaysWithHourly.reduce((sum, d) => sum + d.hourly[hour].revenue, 0);
+      const txnSum = recentDaysWithHourly.reduce((sum, d) => sum + d.hourly[hour].transactionCount, 0);
+      const n = recentDaysWithHourly.length;
+      return {
+        hour,
+        avgRevenue: Math.round((revenueSum / n) * 100) / 100,
+        avgTransactionCount: Math.round((txnSum / n) * 10) / 10,
+      };
+    });
+  }
+
+  // ROUND 20/21: real Monthly totals (up to 24 months / 2 years), opt-in via
+  // HISTORICAL_MONTHS (see fetchHistoricalTotals()'s comment above main()). The
+  // Yearly view was dropped entirely (Round 21) — the report now goes no deeper
+  // than Monthly.
+  let monthlyTotals = [];
+  if (HISTORICAL_MONTHS > 0) {
+    const rangeStart = new Date(`${targetDateStr}T00:00:00Z`);
+    rangeStart.setUTCMonth(rangeStart.getUTCMonth() - Math.max(HISTORICAL_MONTHS, 1));
+
+    let periodState = await loadPeriodTotalsState();
+    periodState = await fetchHistoricalTotals(tokenManager, accountId, rangeStart, HISTORICAL_MAX_CHUNKS, periodState);
+    await savePeriodTotalsState(periodState);
+
+    monthlyTotals = buildMonthlyTotalsOutput(periodState);
+  } else {
+    // Even when no historical pull is requested this run, surface whatever a
+    // PRIOR run already accumulated into period-totals-state.json, so the
+    // dashboard keeps showing real Monthly data on every normal daily run
+    // rather than only on the (heavy, occasional) historical-pull runs.
+    const periodState = await loadPeriodTotalsState();
+    if (Object.keys(periodState.monthly).length) {
+      monthlyTotals = buildMonthlyTotalsOutput(periodState);
+    }
+  }
 
   const output = {
     generatedAt: now.toISOString(),
@@ -900,6 +1212,8 @@ async function main() {
     lowStockItems: lowStock,
     products,
     dailyTotals,
+    hourlyTrailingAvg,
+    monthlyTotals,
   };
 
   const fs = await import('node:fs/promises');
@@ -909,7 +1223,8 @@ async function main() {
   await fs.writeFile(STORE_HISTORY_FILE, JSON.stringify(storeHistory));
 
   console.log(
-    `Wrote public/data.json (${products.length} products, ${dailyTotals.length} days of daily totals), ` +
+    `Wrote public/data.json (${products.length} products, ${dailyTotals.length} days of daily totals, ` +
+    `${monthlyTotals.length} months of period totals), ` +
     `${HISTORY_FILE} (${Object.keys(history).length} days of per-item history), and ` +
     `${STORE_HISTORY_FILE} (${Object.keys(storeHistory).length} days of store-wide history).`
   );

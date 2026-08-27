@@ -1391,7 +1391,6 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
                   <button class="seg-btn active" data-period="daily">Daily</button>
                   <button class="seg-btn" data-period="weekly">Weekly</button>
                   <button class="seg-btn" data-period="monthly">Monthly</button>
-                  <button class="seg-btn" data-period="yearly">Yearly</button>
                 </div>
                 <select class="select-input" data-role="metric-select">
                   <option value="revenue">Revenue</option>
@@ -1756,6 +1755,18 @@ function formatHour(hour) {
   var displayHour = hour % 12 === 0 ? 12 : hour % 12;
   return displayHour + ':00 ' + period;
 }
+// Short form ("9a", "12p") matching the hourly chart's existing sample label style —
+// used by the Round 20 real-hourly wiring below.
+function formatHourShort(hour) {
+  var period = hour >= 12 ? 'p' : 'a';
+  var h12 = hour % 12 === 0 ? 12 : hour % 12;
+  return h12 + period;
+}
+function formatMonthLabel(monthKey) {
+  var parts = monthKey.split('-');
+  var d = new Date(Date.UTC(Number(parts[0]), Number(parts[1]) - 1, 1));
+  return d.toLocaleDateString(undefined, { month: 'short', year: '2-digit', timeZone: 'UTC' });
+}
 
 // Placeholder trend cells appended to real (not-yet-historical) bar-list rows so every
 // ranked row — real or sample — carries the same rank/name/bar/value/trend anatomy.
@@ -1878,6 +1889,24 @@ function renderReport(data) {
   // data.dailyTotals carries them — swap them in for the static sample dates.
   if (window.__refreshDailyPerformance && Array.isArray(data.dailyTotals) && data.dailyTotals.length) {
     window.__refreshDailyPerformance(data.dailyTotals);
+  }
+
+  // Round 20/21: real Hourly (both "This Week" and the Overview tab's own Hourly
+  // view), and real Monthly totals (up to 24 months / 2 years, for year-over-year
+  // trend analysis) on the Overview tab — see each refresh function's own comment
+  // for exactly what's real vs. still-sample. Margin %/Customers at the Monthly
+  // grain aren't tracked by the lightweight historical pull, so those two metrics
+  // keep showing the honest "not enough data yet" message even once
+  // Revenue/Transactions have gone real. Round 21 dropped the Yearly view entirely
+  // (per the user's request to keep the report at Monthly-at-most granularity).
+  if (window.__refreshHourlyThisWeek && Array.isArray(data.dailyTotals)) {
+    window.__refreshHourlyThisWeek(data.dailyTotals);
+  }
+  if (window.__refreshHourlyOverview && Array.isArray(data.hourlyCounts) && Array.isArray(data.hourlyTrailingAvg)) {
+    window.__refreshHourlyOverview(data.hourlyCounts, data.hourlyTrailingAvg);
+  }
+  if (window.__refreshPeriodTotals && Array.isArray(data.monthlyTotals)) {
+    window.__refreshPeriodTotals(data.monthlyTotals);
   }
 }
 
@@ -2126,19 +2155,20 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
   }
 
   // ---- Shared sample period data (Performance Trend / History Trend / Hourly Pattern widgets) ----
+  // Round 21: the Yearly period was dropped entirely (per the user's request — the
+  // report now goes no deeper than Monthly, with up to 24 months/2 years shown for
+  // year-over-year trend analysis), so there's no more `yearly` key anywhere below.
   var PERIOD_LABELS = {
     hourly: ['9a', '10a', '11a', '12p', '1p', '2p', '3p', '4p', '5p', '6p', '7p'],
     daily: ['Aug 9', 'Aug 10', 'Aug 11', 'Aug 12', 'Aug 13', 'Aug 14', 'Aug 15', 'Aug 16', 'Aug 17', 'Aug 18', 'Aug 19', 'Aug 20', 'Aug 21', 'Aug 22'],
     weekly: ['Wk 1', 'Wk 2', 'Wk 3', 'Wk 4', 'Wk 5', 'Wk 6', 'Wk 7', 'Wk 8', 'Wk 9', 'Wk 10', 'Wk 11', 'Wk 12'],
-    monthly: ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
-    yearly: ['2022', '2023', '2024', '2025', '2026']
+    monthly: ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug']
   };
   var PERIOD_META = {
     hourly: { prevLabel: 'previous hour', yearLabel: 'same hour last week' },
     daily: { prevLabel: 'yesterday', yearLabel: 'same day last year' },
     weekly: { prevLabel: 'last week', yearLabel: 'same week last year' },
-    monthly: { prevLabel: 'last month', yearLabel: 'same month last year' },
-    yearly: { prevLabel: 'last year', yearLabel: '5-year average' }
+    monthly: { prevLabel: 'last month', yearLabel: 'same month last year' }
   };
   var METRIC_DATA = {
     revenue: {
@@ -2146,13 +2176,11 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
         hourly: [2340, 3940, 6500, 5550, 4450, 3500, 3940, 5040, 4450, 2990, 1310],
         daily: [6500, 8830, 5690, 7660, 10150, 14450, 11830, 7150, 8180, 6280, 9780, 11390, 15330, 12990],
         weekly: [39400, 41250, 43050, 44550, 42350, 46000, 47450, 48550, 45250, 49650, 51850, 55100],
-        monthly: [159100, 147500, 193400, 211000, 143100, 161300, 181000, 183200, 199300, 191300, 211700, 220500],
-        yearly: [1880000, 2015000, 2160000, 2310000, 2400000]
+        monthly: [159100, 147500, 193400, 211000, 143100, 161300, 181000, 183200, 199300, 191300, 211700, 220500]
       },
       deltas: {
         hourly: { prev: 5.2, year: 12.4 }, daily: { prev: -3.1, year: 8.7 },
-        weekly: { prev: 6.8, year: 15.2 }, monthly: { prev: -2.4, year: 9.6 },
-        yearly: { prev: 4.1, year: 22.3 }
+        weekly: { prev: 6.8, year: 15.2 }, monthly: { prev: -2.4, year: 9.6 }
       }
     },
     transactions: {
@@ -2160,13 +2188,11 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
         hourly: [4, 9, 19, 15, 11, 8, 10, 13, 12, 8, 3],
         daily: [88, 110, 76, 96, 128, 172, 138, 95, 102, 88, 118, 134, 168, 145],
         weekly: [560, 590, 605, 625, 600, 645, 660, 670, 640, 680, 705, 742],
-        monthly: [2150, 2020, 2600, 2820, 1980, 2200, 2400, 2280, 2650, 2510, 2700, 2850],
-        yearly: [19800, 20600, 21900, 23100, 24000]
+        monthly: [2150, 2020, 2600, 2820, 1980, 2200, 2400, 2280, 2650, 2510, 2700, 2850]
       },
       deltas: {
         hourly: { prev: 2.8, year: 6.5 }, daily: { prev: -1.5, year: 5.9 },
-        weekly: { prev: 4.2, year: 10.1 }, monthly: { prev: -0.8, year: 6.3 },
-        yearly: { prev: 3.4, year: 17.8 }
+        weekly: { prev: 4.2, year: 10.1 }, monthly: { prev: -0.8, year: 6.3 }
       }
     },
     avgTicket: {
@@ -2174,13 +2200,11 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
         hourly: [584, 438, 343, 372, 402, 438, 394, 387, 372, 372, 438],
         daily: [73.7, 80.3, 75.2, 79.6, 79.6, 84.0, 85.4, 75.2, 80.3, 71.5, 83.2, 84.7, 91.2, 89.8],
         weekly: [70.1, 70.1, 71.5, 71.5, 70.8, 71.5, 71.5, 72.3, 70.8, 73.0, 73.7, 74.5],
-        monthly: [73.7, 73.0, 74.5, 74.5, 72.3, 73.0, 75.2, 80.3, 75.2, 75.9, 78.1, 77.4],
-        yearly: [95.0, 97.8, 98.6, 100.0, 100.0]
+        monthly: [73.7, 73.0, 74.5, 74.5, 72.3, 73.0, 75.2, 80.3, 75.2, 75.9, 78.1, 77.4]
       },
       deltas: {
         hourly: { prev: 2.3, year: 5.5 }, daily: { prev: -1.6, year: 2.6 },
-        weekly: { prev: 2.4, year: 4.6 }, monthly: { prev: -1.6, year: 3.1 },
-        yearly: { prev: 0.7, year: 3.9 }
+        weekly: { prev: 2.4, year: 4.6 }, monthly: { prev: -1.6, year: 3.1 }
       }
     },
     margin: {
@@ -2188,13 +2212,11 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
         hourly: [41, 42, 43, 42, 41, 43, 44, 42, 41, 42, 43],
         daily: [41.2, 41.9, 40.5, 42.0, 42.4, 43.5, 43.0, 41.8, 42.5, 40.9, 43.1, 42.7, 44.2, 43.6],
         weekly: [41.5, 41.8, 42.0, 42.2, 41.9, 42.3, 42.5, 42.6, 42.1, 42.8, 43.0, 43.5],
-        monthly: [40.8, 40.5, 41.2, 41.6, 40.2, 40.9, 41.5, 42.0, 42.6, 42.9, 43.4, 43.8],
-        yearly: [40.2, 41.0, 41.9, 42.6, 43.1]
+        monthly: [40.8, 40.5, 41.2, 41.6, 40.2, 40.9, 41.5, 42.0, 42.6, 42.9, 43.4, 43.8]
       },
       deltas: {
         hourly: { prev: 0.4, year: 1.1 }, daily: { prev: -0.6, year: 1.8 },
-        weekly: { prev: 0.7, year: 1.4 }, monthly: { prev: -0.3, year: 1.6 },
-        yearly: { prev: 0.5, year: 2.9 }
+        weekly: { prev: 0.7, year: 1.4 }, monthly: { prev: -0.3, year: 1.6 }
       }
     },
     // Unique customers per period — closely tracks Transactions (in the real daily sync,
@@ -2206,13 +2228,11 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
         hourly: [4, 9, 18, 14, 10, 8, 10, 12, 11, 8, 3],
         daily: [84, 105, 72, 91, 122, 163, 131, 90, 97, 84, 112, 127, 160, 138],
         weekly: [532, 561, 575, 594, 570, 613, 627, 637, 608, 646, 670, 705],
-        monthly: [2043, 1919, 2470, 2679, 1881, 2090, 2280, 2166, 2518, 2385, 2565, 2708],
-        yearly: [18810, 19570, 20805, 21945, 22800]
+        monthly: [2043, 1919, 2470, 2679, 1881, 2090, 2280, 2166, 2518, 2385, 2565, 2708]
       },
       deltas: {
         hourly: { prev: 2.6, year: 6.1 }, daily: { prev: -1.4, year: 5.6 },
-        weekly: { prev: 4.0, year: 9.7 }, monthly: { prev: -0.7, year: 6.0 },
-        yearly: { prev: 3.2, year: 17.0 }
+        weekly: { prev: 4.0, year: 9.7 }, monthly: { prev: -0.7, year: 6.0 }
       }
     }
   };
@@ -2243,11 +2263,58 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
     // callers backing a real series pass noYear instead of falling through to the
     // YEAR_WAVE sample oscillation, which would otherwise silently paint a fabricated
     // number that looks just as real as everything else in the row.
+    var realRows = opts && opts.realRows; // Round 20: Monthly, once real, DOES have a
+    // genuine per-row year-comparison (same-month-last-year — see
+    // __refreshPeriodTotals below) — realRows carries that real per-row value (or
+    // null for a row where it isn't available yet), taking priority over both the
+    // noYear dash and the YEAR_WAVE fabrication.
     return values.map(function(v, i) {
       var prevPct = i === 0 ? aggPrev : pctChange(v, values[i - 1]);
-      var yearPct = noYear ? null : aggYear + YEAR_WAVE[i % YEAR_WAVE.length];
+      var yearPct;
+      if (realRows) {
+        yearPct = (realRows[i] === undefined) ? null : realRows[i];
+      } else if (noYear) {
+        yearPct = null;
+      } else {
+        yearPct = aggYear + YEAR_WAVE[i % YEAR_WAVE.length];
+      }
       return { label: labels[i], value: v, prevPct: prevPct, yearPct: yearPct };
     });
+  }
+
+  // Round 19: honest "not enough real data yet" state for Hourly/Monthly (see
+  // NOT_YET_REAL_MESSAGES and its check in render() below) — clears the chart, labels,
+  // caption, and table rather than showing them populated with fabricated numbers that
+  // would otherwise look exactly as credible as the now-real Daily/Weekly views.
+  // Round 21 dropped Yearly entirely, so there's no yearly entry here anymore.
+  var NOT_YET_REAL_MESSAGES = {
+    hourly: 'Hour-by-hour trends need day-by-day hourly tracking that the sync does not collect yet, so this view is not wired to real data.',
+    monthly: 'Monthly trends need about a year of accumulated daily history to be meaningful. The rolling history file currently keeps about 12 weeks, so this view is not wired to real data yet.'
+  };
+  function renderNotEnoughData(chartEl, labelsEl, captionEl, tableBodyEl, message) {
+    if (chartEl) chartEl.innerHTML = '<div class="empty-note" style="display:flex;align-items:center;justify-content:center;height:100%;min-height:140px;padding:20px;text-align:center;">' + escapeHtml(message) + '</div>';
+    if (labelsEl) labelsEl.innerHTML = '';
+    if (captionEl) captionEl.innerHTML = '';
+    if (tableBodyEl) tableBodyEl.innerHTML = '<tr><td colspan="4" class="empty-note" style="padding:16px;text-align:center;">Not enough real data yet.</td></tr>';
+  }
+
+  // Round 20: the NOT_YET_REAL_MESSAGES gate above used to be unconditional for
+  // hourly/monthly — now that the sync script can pull real data for those periods
+  // (opt-in, see HISTORICAL_MONTHS and the per-day hourly breakdown), this decides
+  // per period+metric whether real data is actually available yet, so the honest
+  // placeholder only shows where it is still true. Margin %/Customers never go real
+  // at the Monthly grain — the historical pull is deliberately lightweight (no
+  // SaleLines/Item/Customer relations, since pulling those across up to 2 years of
+  // history would be far too slow) — so those two metrics keep the honest
+  // placeholder even once Revenue/Transactions have real Monthly data.
+  function periodHasRealData(period, metric, opts) {
+    if (period === 'hourly') {
+      if (opts.weekScoped) return REAL_HOURLY_WEEK_ACTIVE;
+      if (opts.hourlyVsAvg4wk) return REAL_HOURLY_OVERVIEW_ACTIVE && (metric === 'revenue' || metric === 'transactions');
+      return false;
+    }
+    if (period === 'monthly') return REAL_MONTHLY_ACTIVE && (metric === 'revenue' || metric === 'transactions');
+    return true; // daily/weekly are handled by their own existing real/sample logic
   }
 
   // Renders a period/value/vs-prior/vs-last-year table body, most-recent period first,
@@ -2316,8 +2383,43 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
   // of routing through the YEAR_WAVE sample oscillation (see
   // buildRowsFromSeries's noYear option and renderCaption's null handling).
   var REAL_DAILY_ACTIVE = false;
+  var REAL_WEEKLY_ACTIVE = false;
+  // Round 20/21: real Hourly (two independent widgets, each with its own comparison
+  // basis — see each refresh function below) and real Monthly totals (up to 24
+  // months / 2 years — Round 21 dropped Yearly entirely).
+  var REAL_HOURLY_WEEK_ACTIVE = false;
+  var REAL_HOURLY_WEEK_LABELS = [];
+  var REAL_HOURLY_OVERVIEW_ACTIVE = false;
+  var REAL_HOURLY_OVERVIEW_LABELS = [];
+  var REAL_MONTHLY_ACTIVE = false;
+  var REAL_MONTHLY_ROWS = null; // { revenue: [pct|null, ...], transactions: [...] } — real
+  // "vs same month last year" per row, only where that lookup actually exists.
   var DAILY_VIEW_MAX_DAYS = 30; // cap how many real days the "daily" chart/table show,
   // even though the underlying history file keeps up to ~12 weeks for other uses.
+
+  // Groups the full real daily-totals history into complete trailing 7-day buckets
+  // (most recent 7 days = the latest bucket, the 7 before that, and so on), dropping
+  // any leftover partial days at the oldest end rather than showing a short "week".
+  // This is the Overview tab's Weekly view's real counterpart to the fixed 12-entry
+  // METRIC_DATA.*.values.weekly sample array — real because the rolling history file
+  // already keeps up to ~12 weeks, the same depth the old sample assumed.
+  function computeRealWeeklyBuckets(dailyTotals) {
+    var buckets = [];
+    var i = dailyTotals.length;
+    while (i - 7 >= 0) {
+      var slice = dailyTotals.slice(i - 7, i);
+      var revenue = slice.reduce(function(a, d) { return a + d.revenue; }, 0);
+      var transactionCount = slice.reduce(function(a, d) { return a + d.transactionCount; }, 0);
+      buckets.unshift({
+        endDate: slice[slice.length - 1].date,
+        revenue: revenue,
+        transactionCount: transactionCount,
+        avgTicket: transactionCount > 0 ? revenue / transactionCount : 0,
+      });
+      i -= 7;
+    }
+    return buckets;
+  }
 
   window.__refreshDailyPerformance = function(dailyTotals) {
     if (!Array.isArray(dailyTotals) || dailyTotals.length < 2) return; // need at least
@@ -2339,6 +2441,167 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
     METRIC_DATA.avgTicket.deltas.daily = { prev: pctChange(last.avgTicket, prev.avgTicket) || 0, year: null };
 
     REAL_DAILY_ACTIVE = true;
+
+    // Weekly: computed from the FULL history (not the DAILY_VIEW_MAX_DAYS-capped
+    // slice above), since a week's rollup wants as much of the ~12-week window as
+    // exists — only wired in once at least 2 complete weeks (14 real days) exist,
+    // so the widget always shows a real week-over-week comparison rather than one
+    // lonely bucket.
+    var weeks = computeRealWeeklyBuckets(dailyTotals);
+    if (weeks.length >= 2) {
+      var wLabels = weeks.map(function(w) {
+        return 'Wk ' + new Date(w.endDate + 'T00:00:00Z').toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      });
+      PERIOD_LABELS.weekly = wLabels;
+      METRIC_DATA.revenue.values.weekly = weeks.map(function(w) { return w.revenue; });
+      METRIC_DATA.transactions.values.weekly = weeks.map(function(w) { return w.transactionCount; });
+      METRIC_DATA.avgTicket.values.weekly = weeks.map(function(w) { return w.avgTicket; });
+
+      var lastW = weeks[weeks.length - 1];
+      var prevW = weeks[weeks.length - 2];
+      METRIC_DATA.revenue.deltas.weekly = { prev: pctChange(lastW.revenue, prevW.revenue) || 0, year: null };
+      METRIC_DATA.transactions.deltas.weekly = { prev: pctChange(lastW.transactionCount, prevW.transactionCount) || 0, year: null };
+      METRIC_DATA.avgTicket.deltas.weekly = { prev: pctChange(lastW.avgTicket, prevW.avgTicket) || 0, year: null };
+
+      REAL_WEEKLY_ACTIVE = true;
+    }
+
+    if (window.__rerenderPeriodWidgets) window.__rerenderPeriodWidgets();
+  };
+
+  // ---------------------------------------------------------------------
+  // Round 20: real Hourly, Monthly, and Yearly — direct response to "I need to be
+  // able to pull the overall sales for each of these time periods" (rejecting the
+  // Round 19 honest-placeholder-only approach in favor of actually pulling and
+  // wiring the data). See sync-lightspeed.js's fetchHistoricalTotals() and the
+  // per-day `hourly` breakdown for where this data comes from.
+  // ---------------------------------------------------------------------
+
+  // Sums an array of dailyTotals entries (each already carrying a 24-slot .hourly
+  // breakdown, per aggregateDailyTotals() in the sync script) into one 24-slot
+  // {revenue, transactionCount} total per hour — the building block for both a
+  // "this week vs prior week" hourly comparison.
+  function sumHourlyBuckets(days) {
+    var sums = [];
+    for (var h = 0; h < 24; h++) sums.push({ revenue: 0, transactionCount: 0 });
+    days.forEach(function(d) {
+      (d.hourly || []).forEach(function(hourEntry, hour) {
+        sums[hour].revenue += hourEntry.revenue;
+        sums[hour].transactionCount += hourEntry.transactionCount;
+      });
+    });
+    return sums;
+  }
+
+  // This Week's "By Hour" view: real per-hour totals for the most recent 7 real
+  // days vs. the 7 real days before that — same "no misleading partial-window
+  // numbers" principle as Weekly's real wiring above, so this only activates once
+  // a FULL 14-day window of real per-day hourly data exists (never a lopsided
+  // this-week-vs-a-couple-of-days comparison).
+  window.__refreshHourlyThisWeek = function(dailyTotals) {
+    if (!Array.isArray(dailyTotals) || dailyTotals.length < 14) return;
+    var withHourly = dailyTotals.filter(function(d) { return Array.isArray(d.hourly) && d.hourly.length === 24; });
+    if (withHourly.length < 14) return;
+    var thisWeekDays = withHourly.slice(-7);
+    var priorWeekDays = withHourly.slice(-14, -7);
+    if (thisWeekDays.length < 7 || priorWeekDays.length < 7) return;
+
+    var thisSums = sumHourlyBuckets(thisWeekDays);
+    var priorSums = sumHourlyBuckets(priorWeekDays);
+
+    // Only show hours the store actually has activity in (this week or the prior
+    // week) — real per-hour data is naturally sparse outside operating hours, so a
+    // full 0-23 axis would be mostly dead space.
+    var activeHours = [];
+    for (var h = 0; h < 24; h++) {
+      if (thisSums[h].transactionCount > 0 || priorSums[h].transactionCount > 0) activeHours.push(h);
+    }
+    if (activeHours.length === 0) return;
+
+    REAL_HOURLY_WEEK_LABELS = activeHours.map(formatHourShort);
+    THIS_WEEK_HOURLY.revenue = {
+      thisWeek: activeHours.map(function(h) { return Math.round(thisSums[h].revenue * 100) / 100; }),
+      priorWeek: activeHours.map(function(h) { return Math.round(priorSums[h].revenue * 100) / 100; })
+    };
+    THIS_WEEK_HOURLY.transactions = {
+      thisWeek: activeHours.map(function(h) { return thisSums[h].transactionCount; }),
+      priorWeek: activeHours.map(function(h) { return priorSums[h].transactionCount; })
+    };
+    // avgTicket derives from these two via thisWeekHourlyAvgTicket() — no separate wiring needed.
+
+    REAL_HOURLY_WEEK_ACTIVE = true;
+    if (window.__rerenderPeriodWidgets) window.__rerenderPeriodWidgets();
+  };
+
+  // Overview tab's Hourly view: today's real per-hour shape (data.hourlyCounts,
+  // now carrying revenue alongside transaction count) vs. the trailing-N-day real
+  // average the sync computes (data.hourlyTrailingAvg) — only activates once the
+  // sync has gated that average open (≥7 qualifying real days; see
+  // HOURLY_TRAILING_DAYS/hourlyTrailingAvg in sync-lightspeed.js).
+  window.__refreshHourlyOverview = function(todayHourlyCounts, hourlyTrailingAvg) {
+    if (!Array.isArray(hourlyTrailingAvg) || hourlyTrailingAvg.length !== 24) return;
+    var todayByHour = {};
+    (Array.isArray(todayHourlyCounts) ? todayHourlyCounts : []).forEach(function(h) { todayByHour[h.hour] = h; });
+    var trailingByHour = {};
+    hourlyTrailingAvg.forEach(function(h) { trailingByHour[h.hour] = h; });
+
+    var activeHours = [];
+    for (var h = 0; h < 24; h++) {
+      var t = trailingByHour[h];
+      if ((t && t.avgTransactionCount > 0) || todayByHour[h]) activeHours.push(h);
+    }
+    if (activeHours.length === 0) return;
+
+    REAL_HOURLY_OVERVIEW_LABELS = activeHours.map(formatHourShort);
+    METRIC_DATA.revenue.values.hourly = activeHours.map(function(h) { return todayByHour[h] ? todayByHour[h].revenue : 0; });
+    METRIC_DATA.transactions.values.hourly = activeHours.map(function(h) { return todayByHour[h] ? todayByHour[h].count : 0; });
+    HOURLY_WINDOW_DATA.revenue['4'] = {
+      values: activeHours.map(function(h) { return (trailingByHour[h] || {}).avgRevenue || 0; }),
+      deltas: { prev: 0, year: null }
+    };
+    HOURLY_WINDOW_DATA.transactions['4'] = {
+      values: activeHours.map(function(h) { return (trailingByHour[h] || {}).avgTransactionCount || 0; }),
+      deltas: { prev: 0, year: null }
+    };
+
+    REAL_HOURLY_OVERVIEW_ACTIVE = true;
+    if (window.__rerenderPeriodWidgets) window.__rerenderPeriodWidgets();
+  };
+
+  // Overview tab's Monthly view: real totals once the sync's historical pull has
+  // accumulated at least 2 months (fetchHistoricalTotals in sync-lightspeed.js).
+  // Only Revenue and Transactions go real here — Margin %/Customers keep the
+  // honest placeholder (see periodHasRealData above) since the historical pull
+  // deliberately doesn't fetch the per-line/per-customer relations those would
+  // need across up to 2 years of history. Round 21 dropped Yearly entirely (per
+  // the user's request to keep the report at Monthly-at-most granularity, with
+  // up to 24 months/2 years shown for year-over-year trend analysis), so this no
+  // longer takes a yearlyTotals argument.
+  window.__refreshPeriodTotals = function(monthlyTotals) {
+    if (Array.isArray(monthlyTotals) && monthlyTotals.length >= 2) {
+      PERIOD_LABELS.monthly = monthlyTotals.map(function(m) { return formatMonthLabel(m.month); });
+      METRIC_DATA.revenue.values.monthly = monthlyTotals.map(function(m) { return m.revenue; });
+      METRIC_DATA.transactions.values.monthly = monthlyTotals.map(function(m) { return m.transactionCount; });
+
+      var lastM = monthlyTotals[monthlyTotals.length - 1];
+      var prevM = monthlyTotals[monthlyTotals.length - 2];
+      METRIC_DATA.revenue.deltas.monthly = { prev: pctChange(lastM.revenue, prevM.revenue) || 0, year: null };
+      METRIC_DATA.transactions.deltas.monthly = { prev: pctChange(lastM.transactionCount, prevM.transactionCount) || 0, year: null };
+
+      // yearAgoRevenue/yearAgoTransactionCount come straight from the sync (looked up
+      // against its FULL accumulated history, not just the ~12 months exposed here) —
+      // null wherever that lookback isn't available yet, honestly dashed per row below.
+      REAL_MONTHLY_ROWS = {
+        revenue: monthlyTotals.map(function(m) {
+          return (typeof m.yearAgoRevenue === 'number') ? pctChange(m.revenue, m.yearAgoRevenue) : null;
+        }),
+        transactions: monthlyTotals.map(function(m) {
+          return (typeof m.yearAgoTransactionCount === 'number') ? pctChange(m.transactionCount, m.yearAgoTransactionCount) : null;
+        })
+      };
+      REAL_MONTHLY_ACTIVE = true;
+    }
+
     if (window.__rerenderPeriodWidgets) window.__rerenderPeriodWidgets();
   };
 
@@ -2364,6 +2627,19 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
 
     function render() {
       var values, labels, deltaPrev, deltaYear, prevLabel, yearLabel, rows;
+
+      // Round 20/21: Hourly and Monthly now DO get wired to real data once the
+      // sync has pulled enough of it (see periodHasRealData above) — the honest
+      // "not enough data yet" message only shows for the specific period+metric
+      // combinations that genuinely aren't available yet (either because the
+      // historical pull hasn't run/finished, or — for Margin %/Customers at the
+      // Monthly grain — because that pull deliberately doesn't track them). Yearly
+      // was dropped entirely (Round 21), so it's never a reachable period at all.
+      if (NOT_YET_REAL_MESSAGES[period] && !periodHasRealData(period, metric, opts)) {
+        renderNotEnoughData(chartEl, labelsEl, captionEl, tableBodyEl, NOT_YET_REAL_MESSAGES[period]);
+        return;
+      }
+
       if (opts.weekScoped && (period === 'daily' || period === 'hourly')) {
         // "This Week" scoping, for both the By Day and By Hour views: every row compares
         // against the matching bucket (same weekday, or same hour-of-day) from the prior
@@ -2381,7 +2657,9 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
             : THIS_WEEK_HOURLY[metric];
           values = hourlySrc.thisWeek;
           priorVals = hourlySrc.priorWeek;
-          labels = PERIOD_LABELS.hourly || [];
+          // Round 20: once real (THIS_WEEK_HOURLY overwritten by __refreshHourlyThisWeek),
+          // use its real active-hours labels instead of the fixed 9a-7p sample axis.
+          labels = REAL_HOURLY_WEEK_ACTIVE ? REAL_HOURLY_WEEK_LABELS : (PERIOD_LABELS.hourly || []);
         }
         // Round 18: with real data, only trust the "vs prior week" comparison once a
         // full prior 7-day window actually exists — comparing this week's 7 days
@@ -2402,7 +2680,7 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
         // deltaYear through the YEAR_WAVE sample oscillation (which would otherwise
         // silently turn a null deltaYear into small nonzero-looking numbers, since
         // `null + x` coerces to `x` in JS rather than staying "no data").
-        var realNoYear = REAL_DAILY_ACTIVE && period === 'daily';
+        var realNoYear = (REAL_DAILY_ACTIVE && period === 'daily') || (REAL_HOURLY_WEEK_ACTIVE && period === 'hourly');
         rows = values.map(function(v, i) {
           var pPct = realDailyPartialWindow ? null : (priorVals[i] > 0 ? pctChange(v, priorVals[i]) : null);
           var yPct = realNoYear ? null : deltaYear + YEAR_WAVE[i % YEAR_WAVE.length];
@@ -2414,19 +2692,25 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
         // aggregate number).
         var md1 = METRIC_DATA[metric];
         values = md1.values.hourly || [];
-        labels = PERIOD_LABELS.hourly || [];
+        // Round 20: once real (METRIC_DATA.*.values.hourly overwritten by
+        // __refreshHourlyOverview for revenue/transactions), use its real
+        // active-hours labels instead of the fixed 9a-7p sample axis.
+        var realHourlyOverview = REAL_HOURLY_OVERVIEW_ACTIVE && (metric === 'revenue' || metric === 'transactions');
+        labels = realHourlyOverview ? REAL_HOURLY_OVERVIEW_LABELS : (PERIOD_LABELS.hourly || []);
         var avg4wk = (HOURLY_WINDOW_DATA[metric] || {})['4'] || { values: [], deltas: { prev: 0, year: 0 } };
         var avgVals = avg4wk.values;
         var avgSum = avgVals.reduce(function(a, b) { return a + b; }, 0);
         var valSum = values.reduce(function(a, b) { return a + b; }, 0);
         deltaPrev = avgSum > 0 ? pctChange(valSum, avgSum) : 0;
-        deltaYear = avg4wk.deltas.year;
+        // Real hourly data has no real "vs last year" comparison yet (same limitation
+        // as Daily/Weekly) — show an honest dash instead of the YEAR_WAVE fabrication.
+        deltaYear = realHourlyOverview ? null : avg4wk.deltas.year;
         prevLabel = '4-week hourly average';
         yearLabel = 'last year';
         rows = values.map(function(v, i) {
           var basis = avgVals[i];
           var pPct = (typeof basis === 'number' && basis > 0) ? pctChange(v, basis) : null;
-          var yPct = deltaYear + YEAR_WAVE[i % YEAR_WAVE.length];
+          var yPct = realHourlyOverview ? null : (deltaYear + YEAR_WAVE[i % YEAR_WAVE.length]);
           return { label: labels[i], value: v, prevPct: pPct, yearPct: yPct };
         });
       } else {
@@ -2439,7 +2723,18 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
         var meta = PERIOD_META[period];
         prevLabel = meta.prevLabel;
         yearLabel = meta.yearLabel;
-        rows = buildRowsFromSeries(values, labels, deltaPrev, deltaYear, { noYear: REAL_DAILY_ACTIVE && period === 'daily' });
+        var noYear = (REAL_DAILY_ACTIVE && period === 'daily') || (REAL_WEEKLY_ACTIVE && period === 'weekly');
+        // Round 20: Monthly, once real, carries a genuine per-row year comparison
+        // (see REAL_MONTHLY_ROWS above) — use it instead of the YEAR_WAVE
+        // fabrication, and show the aggregate caption figure as an honest dash
+        // (deltaYear: null) the same way Daily/Weekly's real wiring already does,
+        // rather than inventing a single flattened number for it.
+        var realRows = null;
+        if (period === 'monthly' && REAL_MONTHLY_ROWS && REAL_MONTHLY_ROWS[metric]) {
+          realRows = REAL_MONTHLY_ROWS[metric];
+          deltaYear = null;
+        }
+        rows = buildRowsFromSeries(values, labels, deltaPrev, deltaYear, { noYear: noYear, realRows: realRows });
       }
       renderBars(chartEl, labelsEl, values, labels, metricFormatter(metric));
       renderCaption(captionEl, deltaPrev, deltaYear, prevLabel, yearLabel);

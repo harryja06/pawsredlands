@@ -17,6 +17,30 @@ on:
           backfill, not on every manual run.
         required: false
         default: ''
+      historical_months:
+        description: >
+          Optional one-time historical pull: walk back at least this many
+          months of sales to seed real Monthly totals on the Sales Overview
+          page. The report shows only the most recent 12 months, but the
+          standard value to request here is still 24 (2 years) — that
+          extra depth is what lets EVERY one of those 12 shown months carry
+          a real "vs same month last year" figure (each shown month's
+          year-ago counterpart is 12-24 months back, which a 24-month-deep
+          pull covers). A shallower value, e.g. 12, would leave every shown
+          month without a year-over-year comparison, so 24 is recommended
+          rather than optional in practice. Leave blank for
+          a normal run. This walks the ENTIRE transaction history in the
+          requested window record-by-record (no shortcut report endpoint
+          exists) and can take a long time on a store with a lot of sales
+          history — tens of minutes to over an hour depending on volume. It
+          is checkpointed: if it doesn't finish in one run, re-run the
+          workflow with the same value and it picks up where it left off
+          instead of starting over. Only fill this in when you actually
+          want to (re)seed historical totals, not on every manual run — it
+          is separate from backfill_days above (which only affects
+          product-level trend history, not Monthly totals).
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -40,13 +64,14 @@ jobs:
           LS_REFRESH_TOKEN: ${{ secrets.LS_REFRESH_TOKEN }}
           LS_ACCOUNT_ID: ${{ secrets.LS_ACCOUNT_ID }}
           BACKFILL_DAYS: ${{ github.event.inputs.backfill_days }}
+          HISTORICAL_MONTHS: ${{ github.event.inputs.historical_months }}
         run: node scripts/sync-lightspeed.js
 
       - name: Commit updated data file
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/data.json public/product-sales-history.json public/store-sales-history.json
+          git add public/data.json public/product-sales-history.json public/store-sales-history.json public/period-totals-state.json
           git diff --cached --quiet && echo "No changes to commit" || git commit -m "Daily Lightspeed data sync"
 
           # A slow run (e.g. a multi-week backfill) can take long enough that

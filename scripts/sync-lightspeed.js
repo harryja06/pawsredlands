@@ -102,6 +102,37 @@ function requireEnv(name) {
   return value;
 }
 
+const REQUEST_TIMEOUT_MS = Number(process.env.REQUEST_TIMEOUT_MS || 30000);
+
+/**
+ * ---------------------------------------------------------------------
+ * ROUND 17 UPDATE: hard timeout on every network call
+ * ---------------------------------------------------------------------
+ * A run was observed to hang indefinitely (39+ minutes with no further
+ * log output, no error) partway through a retried request after a token
+ * refresh — plain `fetch()` with no timeout will wait forever if a
+ * connection stalls or a response never arrives, and a GitHub Actions
+ * job left like that just burns minutes until it eventually hits the
+ * platform's own multi-hour default timeout. Wrapping every fetch with
+ * an AbortController-based timeout turns a stall into a fast, clear
+ * error (default 30s, override with REQUEST_TIMEOUT_MS) instead of a
+ * silent hang.
+ */
+async function fetchWithTimeout(url, options = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error(`Request to ${url} timed out after ${timeoutMs}ms with no response`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function refreshAccessToken() {
   const clientId = requireEnv('LS_CLIENT_ID');
   const clientSecret = requireEnv('LS_CLIENT_SECRET');
@@ -114,7 +145,7 @@ async function refreshAccessToken() {
     refresh_token: refreshToken,
   });
 
-  const res = await fetch(LS_TOKEN_URL, {
+  const res = await fetchWithTimeout(LS_TOKEN_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body,
@@ -174,28 +205,42 @@ function createTokenManager(initialToken) {
  * ever retried once per call site (a second 401 after a fresh refresh
  * means the refresh token itself is no longer valid, which needs a human
  * to fix in Lightspeed's OAuth settings, not another retry).
+ * @param {number} networkRetriesLeft - a stalled/hung connection (see the
+ * ROUND 17 timeout note above) or a transient network error gets a few
+ * retries with a short backoff before giving up, since these are usually
+ * a one-off blip rather than something a human needs to fix.
  */
-async function apiGet(tokenManager, accountId, path, paramPairs = [], isRetryAfterRefresh = false) {
+async function apiGet(tokenManager, accountId, path, paramPairs = [], isRetryAfterRefresh = false, networkRetriesLeft = 3) {
   const url = new URL(`${LS_API_BASE}/${accountId}/${path}`);
   for (const [key, value] of paramPairs) {
     url.searchParams.append(key, value);
   }
 
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${tokenManager.get()}` },
-  });
+  let res;
+  try {
+    res = await fetchWithTimeout(url, {
+      headers: { Authorization: `Bearer ${tokenManager.get()}` },
+    });
+  } catch (err) {
+    if (networkRetriesLeft > 0) {
+      console.warn(`${err.message} — retrying (${networkRetriesLeft} attempt(s) left)...`);
+      await new Promise((r) => setTimeout(r, 5000));
+      return apiGet(tokenManager, accountId, path, paramPairs, isRetryAfterRefresh, networkRetriesLeft - 1);
+    }
+    throw err;
+  }
 
   if (res.status === 429) {
     // Leaky-bucket rate limit hit. Back off and retry once.
     const retryAfter = Number(res.headers.get('Retry-After') || 5);
     await new Promise((r) => setTimeout(r, retryAfter * 1000));
-    return apiGet(tokenManager, accountId, path, paramPairs, isRetryAfterRefresh);
+    return apiGet(tokenManager, accountId, path, paramPairs, isRetryAfterRefresh, networkRetriesLeft);
   }
 
   if (res.status === 401 && !isRetryAfterRefresh) {
     console.warn(`Got 401 on GET ${path} — refreshing the access token and retrying once...`);
     await tokenManager.refresh();
-    return apiGet(tokenManager, accountId, path, paramPairs, true);
+    return apiGet(tokenManager, accountId, path, paramPairs, true, networkRetriesLeft);
   }
 
   if (!res.ok) {

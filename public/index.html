@@ -1375,6 +1375,13 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
             </div>
           </div>
 
+          <div class="summary-stats">
+            <div class="summary-stat"><div class="ss-lbl">Avg. Daily Sales</div><div class="ss-val" id="ov-avg-daily-sales">&mdash;</div></div>
+            <div class="summary-stat"><div class="ss-lbl">Transactions / Wk (Avg.)</div><div class="ss-val" id="ov-txn-per-wk">&mdash;</div></div>
+            <div class="summary-stat"><div class="ss-lbl">Busiest Day</div><div class="ss-val" id="ov-busiest-day">&mdash;</div></div>
+            <div class="summary-stat"><div class="ss-lbl">Top Category &middot; 4 Wks</div><div class="ss-val" id="ov-top-category">&mdash;</div></div>
+          </div>
+
           <div class="panel-card" id="history-trend-widget">
             <div class="control-bar">
               <h3>History Trend<span class="sample-badge">Sample data</span></h3>
@@ -1618,6 +1625,13 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
             </div>
           </div>
 
+          <div class="summary-stats">
+            <div class="summary-stat"><div class="ss-lbl">Busiest Shift</div><div class="ss-val" id="staff-busiest-shift">&mdash;</div></div>
+            <div class="summary-stat"><div class="ss-lbl">Avg. Sales / Staff</div><div class="ss-val" id="staff-avg-sales">&mdash;</div></div>
+            <div class="summary-stat"><div class="ss-lbl">Avg. Hours / Employee</div><div class="ss-val" id="staff-avg-hours">&mdash;</div></div>
+            <div class="summary-stat"><div class="ss-lbl">Overtime Hours</div><div class="ss-val" id="staff-overtime">&mdash;</div></div>
+          </div>
+
           <div class="panel-card" id="labor-cost-widget">
             <div class="control-bar">
               <h3>Labor Cost as % of Sales<span class="sample-badge">Sample data</span></h3>
@@ -1679,6 +1693,13 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
             </div>
           </div>
 
+          <div class="summary-stats">
+            <div class="summary-stat"><div class="ss-lbl">Avg. Spend / Customer</div><div class="ss-val" id="customers-avg-spend">&mdash;</div></div>
+            <div class="summary-stat"><div class="ss-lbl">New Customers / Day (Avg.)</div><div class="ss-val" id="customers-new-per-day">&mdash;</div></div>
+            <div class="summary-stat"><div class="ss-lbl">Busiest Day</div><div class="ss-val" id="customers-busiest-day">&mdash;</div></div>
+            <div class="summary-stat"><div class="ss-lbl">Repeat Customers / Wk (Avg.)</div><div class="ss-val" id="customers-repeat-per-wk">&mdash;</div></div>
+          </div>
+
           <div class="panel-card" id="customer-trend-widget">
             <div class="control-bar">
               <h3>Customer Trend<span class="sample-badge">Sample data</span></h3>
@@ -1733,7 +1754,7 @@ function moneyPrecise(n) {
   return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(n || 0);
 }
 function formatHour(hour) {
-  if (hour === null || hour === undefined) return '&mdash;';
+  if (hour === null || hour === undefined) return '—';
   var period = hour >= 12 ? 'PM' : 'AM';
   var displayHour = hour % 12 === 0 ? 12 : hour % 12;
   return displayHour + ':00 ' + period;
@@ -1748,8 +1769,8 @@ var REAL_ROW_TREND_DASH = '<div class="rank-row-deltas"><span class="rank-row-de
 function renderReport(data) {
   var reportDate = data.reportDate
     ? new Date(data.reportDate + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-    : '&mdash;';
-  var generatedAt = data.generatedAt ? new Date(data.generatedAt).toLocaleString() : '&mdash;';
+    : '—';
+  var generatedAt = data.generatedAt ? new Date(data.generatedAt).toLocaleString() : '—';
 
   // The hero no longer shows the report date / last-updated line directly (Round 10
   // replaced the title+sub with the big "Sales / Today" heading) — that real data is
@@ -1757,13 +1778,13 @@ function renderReport(data) {
   document.getElementById('live-revenue').textContent = money(data.totalRevenue);
   document.getElementById('live-transactions').textContent = new Intl.NumberFormat().format(data.transactionCount || 0);
   document.getElementById('live-ticket').textContent = moneyPrecise(data.avgTransactionValue);
-  document.getElementById('live-margin').textContent = (data.avgMarginPct === null || data.avgMarginPct === undefined) ? '&mdash;' : data.avgMarginPct.toFixed(1) + '%';
+  document.getElementById('live-margin').textContent = (data.avgMarginPct === null || data.avgMarginPct === undefined) ? '—' : data.avgMarginPct.toFixed(1) + '%';
   document.getElementById('live-units').textContent = (data.avgUnitsPerTransaction || 0).toFixed(1);
-  document.getElementById('live-date-small').textContent = data.reportDate || '&mdash;';
-  document.getElementById('live-busiest-hour').textContent = (data.busiestHour === null || data.busiestHour === undefined) ? '&mdash;' : formatHour(data.busiestHour);
+  document.getElementById('live-date-small').textContent = data.reportDate || '—';
+  document.getElementById('live-busiest-hour').textContent = (data.busiestHour === null || data.busiestHour === undefined) ? '—' : formatHour(data.busiestHour);
   document.getElementById('live-customers-per-day').textContent =
     (data.newCustomers === null || data.newCustomers === undefined)
-      ? '&mdash;'
+      ? '—'
       : new Intl.NumberFormat().format((data.newCustomers || 0) + (data.returningCustomers || 0));
 
   // Top 5 brands + revenue by category — no longer feed a live element (the Products
@@ -2376,6 +2397,32 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
   initPeriodWidget('perf-trend-widget', 'daily', 'revenue', { weekScoped: true });
   initPeriodWidget('history-trend-widget', 'daily', 'revenue', { hourlyVsAvg4wk: true });
 
+  // ---- Category Performance data (used by the Overview hero's secondary stats row
+  // below, and by the dormant initCategoryPerformanceWidget further down) ----
+  var CATEGORY_PERFORMANCE_DATA = {
+    '4wk': [
+      { name: 'Food', value: 84200, deltaPrior: 4.8, deltaYear: 12.9 },
+      { name: 'Treats', value: 39800, deltaPrior: 5.6, deltaYear: 19.8 },
+      { name: 'Supplements', value: 27100, deltaPrior: -1.4, deltaYear: 4.2 },
+      { name: 'Toys', value: 21300, deltaPrior: 7.2, deltaYear: 23.1 },
+      { name: 'Grooming & Supplies', value: 17900, deltaPrior: 2.0, deltaYear: 7.8 }
+    ],
+    '12wk': [
+      { name: 'Food', value: 252000, deltaPrior: 3.6, deltaYear: 12.1 },
+      { name: 'Treats', value: 118000, deltaPrior: 4.4, deltaYear: 18.4 },
+      { name: 'Supplements', value: 81500, deltaPrior: -0.8, deltaYear: 4.9 },
+      { name: 'Toys', value: 63200, deltaPrior: 5.9, deltaYear: 21.6 },
+      { name: 'Grooming & Supplies', value: 53100, deltaPrior: 1.6, deltaYear: 8.3 }
+    ],
+    '52wk': [
+      { name: 'Food', value: 968000, deltaPrior: 2.1, deltaYear: 11.2 },
+      { name: 'Treats', value: 452000, deltaPrior: 3.4, deltaYear: 14.6 },
+      { name: 'Supplements', value: 318000, deltaPrior: -0.6, deltaYear: 3.8 },
+      { name: 'Toys', value: 241000, deltaPrior: 4.0, deltaYear: 16.4 },
+      { name: 'Grooming & Supplies', value: 198000, deltaPrior: 1.2, deltaYear: 5.1 }
+    ]
+  };
+
   // ---- Sales / Overview tab: main KPI hero, last 4 completed sample weeks ----
   (function initSalesOverviewKpis() {
     var totalSalesEl = document.getElementById('ov-total-sales');
@@ -2402,33 +2449,29 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
     if (avgTxnEl) avgTxnEl.textContent = fmtCurrencyPrecise(avgTxn);
     var newCustEl = document.getElementById('ov-new-customers-wk');
     if (newCustEl) newCustEl.textContent = fmtNumber(newCustAvg);
+
+    // Secondary stats row (below the hero): a few more Last-4-Weeks numbers that
+    // complement the hero KPIs above without repeating them. Busiest Day stays a labeled
+    // sample constant (no real day-of-week breakdown exists yet); the other three derive
+    // from data already computed here or defined elsewhere on this page.
+    var BUSIEST_DAY_SAMPLE = 'Saturday';
+    var avgDailySalesEl = document.getElementById('ov-avg-daily-sales');
+    if (avgDailySalesEl) avgDailySalesEl.textContent = fmtCurrency(last4RevSum / 28);
+    var txnPerWkEl = document.getElementById('ov-txn-per-wk');
+    if (txnPerWkEl) txnPerWkEl.textContent = fmtNumber(last4TxnSum / 4);
+    var busiestDayEl = document.getElementById('ov-busiest-day');
+    if (busiestDayEl) busiestDayEl.textContent = BUSIEST_DAY_SAMPLE;
+    var topCategoryEl = document.getElementById('ov-top-category');
+    if (topCategoryEl) {
+      var topCat = (CATEGORY_PERFORMANCE_DATA['4wk'] || [])[0];
+      topCategoryEl.textContent = topCat ? topCat.name : '—';
+    }
   })();
 
   // ---- Category Performance (Overview tab): categories on the x-axis instead of time,
-  // toggled across a 4/12/52-week trailing window ----
-  var CATEGORY_PERFORMANCE_DATA = {
-    '4wk': [
-      { name: 'Food', value: 84200, deltaPrior: 4.8, deltaYear: 12.9 },
-      { name: 'Treats', value: 39800, deltaPrior: 5.6, deltaYear: 19.8 },
-      { name: 'Supplements', value: 27100, deltaPrior: -1.4, deltaYear: 4.2 },
-      { name: 'Toys', value: 21300, deltaPrior: 7.2, deltaYear: 23.1 },
-      { name: 'Grooming & Supplies', value: 17900, deltaPrior: 2.0, deltaYear: 7.8 }
-    ],
-    '12wk': [
-      { name: 'Food', value: 252000, deltaPrior: 3.6, deltaYear: 12.1 },
-      { name: 'Treats', value: 118000, deltaPrior: 4.4, deltaYear: 18.4 },
-      { name: 'Supplements', value: 81500, deltaPrior: -0.8, deltaYear: 4.9 },
-      { name: 'Toys', value: 63200, deltaPrior: 5.9, deltaYear: 21.6 },
-      { name: 'Grooming & Supplies', value: 53100, deltaPrior: 1.6, deltaYear: 8.3 }
-    ],
-    '52wk': [
-      { name: 'Food', value: 968000, deltaPrior: 2.1, deltaYear: 11.2 },
-      { name: 'Treats', value: 452000, deltaPrior: 3.4, deltaYear: 14.6 },
-      { name: 'Supplements', value: 318000, deltaPrior: -0.6, deltaYear: 3.8 },
-      { name: 'Toys', value: 241000, deltaPrior: 4.0, deltaYear: 16.4 },
-      { name: 'Grooming & Supplies', value: 198000, deltaPrior: 1.2, deltaYear: 5.1 }
-    ]
-  };
+  // toggled across a 4/12/52-week trailing window (CATEGORY_PERFORMANCE_DATA itself is
+  // now declared earlier, above initSalesOverviewKpis, since the hero's secondary stats
+  // row needs it too) ----
   var CATEGORY_PERFORMANCE_WINDOW_LABEL = { '4wk': 'prior 4 weeks', '12wk': 'prior 12 weeks', '52wk': 'prior 52 weeks' };
   function initCategoryPerformanceWidget(rootId) {
     var root = document.getElementById(rootId);
@@ -3025,6 +3068,25 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
     if (wageTrendEl) wageTrendEl.innerHTML = trendCellHtml(WAGE_TREND_SAMPLE);
     var laborPctEl = document.getElementById('staff-labor-pct');
     if (laborPctEl) laborPctEl.textContent = fmtPercent(laborAvg);
+
+    // Secondary stats row: a few more Last-2-Weeks numbers that round out the hero
+    // without repeating it. Busiest Shift and Avg. Sales / Staff derive from the same
+    // STAFF_SHIFT_RATIO data the hero's own Staff count comes from; hours figures stay
+    // labeled sample constants since no time-and-attendance source is connected yet.
+    var OVERTIME_HOURS_SAMPLE = 6.5;
+    var AVG_HOURS_PER_EMPLOYEE_SAMPLE = 34.2;
+    var busiestShift = STAFF_SHIFT_RATIO.reduce(function(best, r) {
+      return (!best || r.avgSales > best.avgSales) ? r : best;
+    }, null);
+    var totalShiftSales = STAFF_SHIFT_RATIO.reduce(function(s, r) { return s + r.avgSales; }, 0);
+    var busiestShiftEl = document.getElementById('staff-busiest-shift');
+    if (busiestShiftEl) busiestShiftEl.textContent = busiestShift ? busiestShift.shift : '—';
+    var avgSalesPerStaffEl = document.getElementById('staff-avg-sales');
+    if (avgSalesPerStaffEl) avgSalesPerStaffEl.textContent = fmtCurrency(staffCount > 0 ? totalShiftSales / staffCount : 0);
+    var avgHoursEl = document.getElementById('staff-avg-hours');
+    if (avgHoursEl) avgHoursEl.textContent = AVG_HOURS_PER_EMPLOYEE_SAMPLE.toFixed(1) + ' hrs';
+    var overtimeEl = document.getElementById('staff-overtime');
+    if (overtimeEl) overtimeEl.textContent = OVERTIME_HOURS_SAMPLE.toFixed(1) + ' hrs';
   })();
   (function initStaffShiftRatioWidget() {
     var root = document.getElementById('staff-shift-ratio-widget');
@@ -3126,6 +3188,20 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
     if (totEl) totEl.textContent = fmtNumber(totalSum);
     var repeatEl = document.getElementById('customers-repeat-rate');
     if (repeatEl) repeatEl.textContent = fmtPercent(repeatRate);
+
+    // Secondary stats row: a few more Last-4-Weeks numbers that complement the hero
+    // without repeating it. Busiest Day stays a labeled sample constant (no real
+    // day-of-week breakdown exists yet); the rest derive from data already in scope here.
+    var BUSIEST_DAY_SAMPLE = 'Saturday';
+    var last4RevSum = METRIC_DATA.revenue.values.weekly.slice(-4).reduce(function(a, b) { return a + b; }, 0);
+    var avgSpendEl = document.getElementById('customers-avg-spend');
+    if (avgSpendEl) avgSpendEl.textContent = fmtCurrencyPrecise(totalSum > 0 ? last4RevSum / totalSum : 0);
+    var newPerDayEl = document.getElementById('customers-new-per-day');
+    if (newPerDayEl) newPerDayEl.textContent = fmtNumber(newSum / 28);
+    var busiestDayEl = document.getElementById('customers-busiest-day');
+    if (busiestDayEl) busiestDayEl.textContent = BUSIEST_DAY_SAMPLE;
+    var repeatPerWkEl = document.getElementById('customers-repeat-per-wk');
+    if (repeatPerWkEl) repeatPerWkEl.textContent = fmtNumber(returningSum / 4);
   })();
 })();
 </script>

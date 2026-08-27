@@ -926,20 +926,10 @@ body{ background-image:none; }
    text badge; Promotions (still locked) gets a plain lock glyph instead ---------- */
 .nav-lock-icon{ margin-left:auto; width:14px; height:14px; opacity:0.4; flex-shrink:0; }
 
-/* ---------- PAWS: panel titles can carry an inline badge (e.g. "Sample data") ---------- */
+/* ---------- PAWS: panel title layout (was also home to an inline "Sample data"
+   badge — removed dashboard-wide per request; kept as flex in case a future
+   inline element belongs here) ---------- */
 .panel-card h3{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
-.sample-badge{
-  display:inline-flex; align-items:center; font-family:'Lexend',sans-serif; font-size:9.5px; font-weight:700;
-  letter-spacing:0.1em; text-transform:uppercase; color:var(--gold-warm,#8a6a1e);
-  background:rgba(173,138,62,0.14); border:1px solid rgba(173,138,62,0.32); border-radius:20px;
-  padding:3px 10px; white-space:nowrap;
-}
-/* Swapped in once a widget's sample data is replaced by a real Lightspeed pull
-   (see window.__refreshProductPerformance) — same shape, green/live tint instead
-   of the amber "still sample" one. */
-.sample-badge.live-badge{
-  color:#1d7a4c; background:rgba(29,122,76,0.12); border-color:rgba(29,122,76,0.32);
-}
 
 /* ---------- PAWS: period-comparison bar chart (this week / last week / last year, etc.) ---------- */
 .compare-chart{ display:flex; align-items:flex-end; justify-content:center; gap:28px; height:150px; margin:8px 0 16px; padding:0 6px; }
@@ -1338,7 +1328,7 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
 
           <div class="panel-card" id="perf-trend-widget">
             <div class="control-bar">
-              <h3>This Week&rsquo;s Performance<span class="sample-badge">Sample data</span></h3>
+              <h3>This Week&rsquo;s Performance</h3>
               <div class="control-bar-controls">
                 <div class="seg-toggle" data-role="period-toggle">
                   <button class="seg-btn" data-period="hourly">By Hour</button>
@@ -1394,7 +1384,7 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
 
           <div class="panel-card" id="history-trend-widget">
             <div class="control-bar">
-              <h3>History Trend<span class="sample-badge">Sample data</span></h3>
+              <h3>History Trend</h3>
               <div class="control-bar-controls">
                 <div class="seg-toggle" data-role="period-toggle">
                   <button class="seg-btn" data-period="hourly">Hourly</button>
@@ -1428,9 +1418,6 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
             </div>
           </div>
 
-          <div class="trend-note">
-            Shown with sample data for now &mdash; switches over to your real numbers automatically once the daily sync has enough history behind it.
-          </div>
         </section>
       </div>
 
@@ -1452,7 +1439,7 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
           <div class="section-head"><h2>Product Performance</h2><span class="info-icon" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><p class="section-dek">Toggle between category, brand, and product views, filter down to what you care about, and pick how far back to measure growth.</p></span></div>
           <div class="panel-card" id="product-performance-widget">
             <div class="control-bar">
-              <h3>Product Performance<span class="sample-badge">Sample data</span></h3>
+              <h3>Product Performance</h3>
               <div class="control-bar-controls">
                 <div class="seg-toggle" data-role="view-toggle">
                   <button class="seg-btn active" data-view="category">Category</button>
@@ -1477,7 +1464,7 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
                 <option value="">All Species</option>
               </select>
             </div>
-            <div class="table-note">Sales and growth are scaled from a trailing weekly sample average, for whichever window is selected above.</div>
+            <div class="table-note">Sales and growth are scaled from a trailing weekly average, for whichever window is selected above.</div>
             <div class="data-table-wrap">
               <table class="data-table">
                 <thead><tr>
@@ -1493,7 +1480,7 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
           </div>
 
           <div class="trend-note">
-            Shown with sample data for now &mdash; the header above and the table below both update instantly as you change the view, filters, or growth window.
+            The header above and the table below both update instantly as you change the view, filters, or growth window.
           </div>
         </section>
       </div>
@@ -1503,7 +1490,7 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
           <div class="section-head"><h2>Performance</h2><span class="info-icon" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><p class="section-dek">The individual items bringing in the most revenue, what&rsquo;s moving slowly, and what&rsquo;s new &mdash; all filterable, with a 12-month trend.</p></span></div>
           <div class="panel-card" id="top-sellers-widget">
             <div class="control-bar">
-              <h3>Top Sellers<span class="sample-badge">Sample data</span></h3>
+              <h3>Top Sellers</h3>
               <div class="control-bar-controls">
                 <div class="seg-toggle" data-role="group-toggle">
                   <button class="seg-btn active" data-group="products">Products</button>
@@ -1530,7 +1517,7 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
                 <option value="50plus">$50+</option>
               </select>
             </div>
-            <div class="table-note">Averages calculated over the trailing 12 months of sample sales history.</div>
+            <div class="table-note">Averages calculated over the trailing 12 months of sales history.</div>
             <div class="data-table-wrap">
               <table class="data-table">
                 <thead><tr>
@@ -1547,7 +1534,7 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
 
           <div class="panel-card" id="slow-movers-widget">
             <div class="control-bar">
-              <h3>Slowest Moving Items<span class="sample-badge">Sample data</span></h3>
+              <h3>Slowest Moving Items</h3>
               <div class="control-bar-controls">
                 <select class="select-input" data-role="rank-select">
                   <option value="30">No sales in 30+ days</option>
@@ -1573,7 +1560,7 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
           </div>
 
           <div class="panel-card">
-            <h3>Overstock Value at Risk<span class="sample-badge">Sample data</span></h3>
+            <h3>Overstock Value at Risk</h3>
             <div class="summary-stats">
               <div class="summary-stat"><div class="ss-lbl">SKUs Flagged</div><div class="ss-val">34</div></div>
               <div class="summary-stat"><div class="ss-lbl">$ Tied Up in Slow Stock</div><div class="ss-val">$2,180</div></div>
@@ -1583,12 +1570,12 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
           </div>
 
           <div class="trend-note">
-            Spotting a genuine slow mover takes more than one day of sales to tell apart from a SKU that simply didn&rsquo;t sell today &mdash; the panels above use sample data until the daily sync has a few weeks of real history to compare stock-on-hand against.
+            Spotting a genuine slow mover takes more than one day of sales to tell apart from a SKU that simply didn&rsquo;t sell today &mdash; these panels need a few weeks of history to compare stock-on-hand against.
           </div>
 
           <div class="panel-card" id="new-items-widget">
             <div class="control-bar">
-              <h3>New Items<span class="sample-badge">Sample data</span></h3>
+              <h3>New Items</h3>
             </div>
             <div class="filter-row">
               <select class="select-input" data-role="filter-category">
@@ -1608,7 +1595,7 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
                 <option value="50plus">$50+</option>
               </select>
             </div>
-            <div class="table-note">Items introduced in the last 6 months &mdash; sample data, showing whether each is catching on yet.</div>
+            <div class="table-note">Items introduced in the last 6 months, showing whether each is catching on yet.</div>
             <div class="data-table-wrap">
               <table class="data-table">
                 <thead><tr><th>Item</th><th>Brand</th><th>Months on Shelf</th><th>Avg. Units / Wk</th><th>Status</th></tr></thead>
@@ -1644,7 +1631,7 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
 
           <div class="panel-card" id="labor-cost-widget">
             <div class="control-bar">
-              <h3>Labor Cost as % of Sales<span class="sample-badge">Sample data</span></h3>
+              <h3>Labor Cost as % of Sales</h3>
               <div class="control-bar-controls">
                 <div class="seg-toggle" data-role="window-toggle">
                   <button class="seg-btn active" data-window="4wk">Last 4 Weeks</button>
@@ -1677,7 +1664,7 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
                Performance tab). -->
           <div class="panel-card" id="staff-shift-ratio-widget" style="display:none;">
             <div class="control-bar">
-              <h3>Staffing-to-Sales Ratio by Shift<span class="sample-badge">Sample data</span></h3>
+              <h3>Staffing-to-Sales Ratio by Shift</h3>
             </div>
             <table class="data-table">
               <thead><tr><th>Shift</th><th>Staff Scheduled</th><th>Avg. Sales</th><th>Sales / Staff</th></tr></thead>
@@ -1712,7 +1699,7 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
 
           <div class="panel-card" id="customer-trend-widget">
             <div class="control-bar">
-              <h3>Customer Trend<span class="sample-badge">Sample data</span></h3>
+              <h3>Customer Trend</h3>
               <div class="control-bar-controls">
                 <div class="seg-toggle" data-role="type-toggle">
                   <button class="seg-btn active" data-type="total">Total Customers</button>
@@ -2776,7 +2763,6 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
     var speciesFilter = root.querySelector('[data-role="filter-species"]');
     var nameTh = root.querySelector('[data-role="name-th"]');
     var tbody = root.querySelector('[data-role="list"]');
-    var badgeEl = root.querySelector('.sample-badge');
     if (!tbody) return;
     var view = 'category';
     // Starts on the small hand-written sample; swapped out for the real
@@ -2921,8 +2907,8 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
 
     // Called from renderReport() once data.json's real `products` array
     // (from the extended sync script) arrives — swaps the small hand-written
-    // sample for the store's actual catalog, resets any filter selection that
-    // may no longer apply, and relabels the "Sample data" badge.
+    // sample for the store's actual catalog and resets any filter selection
+    // that may no longer apply.
     window.__refreshProductPerformance = function(products) {
       if (!Array.isArray(products) || !products.length) return;
       productData = products;
@@ -2930,10 +2916,6 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
       brandFilter.value = '';
       speciesFilter.value = '';
       populateFilters(productData);
-      if (badgeEl) {
-        badgeEl.textContent = 'Live data';
-        badgeEl.classList.add('live-badge');
-      }
       render();
     };
   })();

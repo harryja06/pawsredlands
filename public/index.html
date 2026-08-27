@@ -934,6 +934,12 @@ body{ background-image:none; }
   background:rgba(173,138,62,0.14); border:1px solid rgba(173,138,62,0.32); border-radius:20px;
   padding:3px 10px; white-space:nowrap;
 }
+/* Swapped in once a widget's sample data is replaced by a real Lightspeed pull
+   (see window.__refreshProductPerformance) — same shape, green/live tint instead
+   of the amber "still sample" one. */
+.sample-badge.live-badge{
+  color:#1d7a4c; background:rgba(29,122,76,0.12); border-color:rgba(29,122,76,0.32);
+}
 
 /* ---------- PAWS: period-comparison bar chart (this week / last week / last year, etc.) ---------- */
 .compare-chart{ display:flex; align-items:flex-end; justify-content:center; gap:28px; height:150px; margin:8px 0 16px; padding:0 6px; }
@@ -1092,7 +1098,11 @@ body{ background-image:none; }
 }
 .summary-hero-kpi{ padding:40px 22px; min-height:130px; justify-content:center; }
 .summary-hero-kpis{ gap:20px; }
-.shk-val{ font-size:clamp(15px,2.4vw,24px); }
+.shk-val{ font-size:clamp(15px,2.4vw,24px); white-space:nowrap; }
+/* A handful of hero KPIs (e.g. Products' "Sales · Last 12 Mo.") can land on a long
+   7-figure dollar value once real-scale sample data is used — drop to a smaller,
+   still-legible size rather than letting overflow-wrap break the number mid-comma. */
+.shk-val.shk-val-compact{ font-size:clamp(12px,1.7vw,18px); }
 @media(max-width:640px){
   /* Once the KPI tiles wrap onto their own row (base rule switches them to a 2-col grid
      at this width), let the heading take the full row width too instead of staying pinned
@@ -1866,6 +1876,15 @@ function renderReport(data) {
   if (window.__rankWidgetUpdaters) {
     window.__rankWidgetUpdaters.forEach(function(fn) { fn(); });
   }
+
+  // Product Performance: once the extended sync script has run at least
+  // once, data.json carries a real `products` array (the store's actual
+  // Lightspeed catalog with real avg units/sales per week) — swap it in for
+  // the small hand-written sample. Before that first sync, data.products is
+  // simply absent and the sample stays in place.
+  if (window.__refreshProductPerformance && Array.isArray(data.products) && data.products.length) {
+    window.__refreshProductPerformance(data.products);
+  }
 }
 
 fetch('data.json', { cache: 'no-store' })
@@ -2123,11 +2142,11 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
   var METRIC_DATA = {
     revenue: {
       values: {
-        hourly: [320, 540, 890, 760, 610, 480, 540, 690, 610, 410, 180],
-        daily: [890, 1210, 780, 1050, 1390, 1980, 1620, 980, 1120, 860, 1340, 1560, 2100, 1780],
-        weekly: [5400, 5650, 5900, 6100, 5800, 6300, 6500, 6650, 6200, 6800, 7100, 7550],
-        monthly: [21800, 20200, 26500, 28900, 19600, 22100, 24800, 25100, 27300, 26200, 29000, 30200],
-        yearly: [210000, 225000, 241000, 258000, 268000]
+        hourly: [2340, 3940, 6500, 5550, 4450, 3500, 3940, 5040, 4450, 2990, 1310],
+        daily: [6500, 8830, 5690, 7660, 10150, 14450, 11830, 7150, 8180, 6280, 9780, 11390, 15330, 12990],
+        weekly: [39400, 41250, 43050, 44550, 42350, 46000, 47450, 48550, 45250, 49650, 51850, 55100],
+        monthly: [159100, 147500, 193400, 211000, 143100, 161300, 181000, 183200, 199300, 191300, 211700, 220500],
+        yearly: [1880000, 2015000, 2160000, 2310000, 2400000]
       },
       deltas: {
         hourly: { prev: 5.2, year: 12.4 }, daily: { prev: -3.1, year: 8.7 },
@@ -2151,11 +2170,11 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
     },
     avgTicket: {
       values: {
-        hourly: [80, 60, 47, 51, 55, 60, 54, 53, 51, 51, 60],
-        daily: [10.1, 11.0, 10.3, 10.9, 10.9, 11.5, 11.7, 10.3, 11.0, 9.8, 11.4, 11.6, 12.5, 12.3],
-        weekly: [9.6, 9.6, 9.8, 9.8, 9.7, 9.8, 9.8, 9.9, 9.7, 10.0, 10.1, 10.2],
-        monthly: [10.1, 10.0, 10.2, 10.2, 9.9, 10.0, 10.3, 11.0, 10.3, 10.4, 10.7, 10.6],
-        yearly: [10.6, 10.9, 11.0, 11.2, 11.2]
+        hourly: [584, 438, 343, 372, 402, 438, 394, 387, 372, 372, 438],
+        daily: [73.7, 80.3, 75.2, 79.6, 79.6, 84.0, 85.4, 75.2, 80.3, 71.5, 83.2, 84.7, 91.2, 89.8],
+        weekly: [70.1, 70.1, 71.5, 71.5, 70.8, 71.5, 71.5, 72.3, 70.8, 73.0, 73.7, 74.5],
+        monthly: [73.7, 73.0, 74.5, 74.5, 72.3, 73.0, 75.2, 80.3, 75.2, 75.9, 78.1, 77.4],
+        yearly: [95.0, 97.8, 98.6, 100.0, 100.0]
       },
       deltas: {
         hourly: { prev: 2.3, year: 5.5 }, daily: { prev: -1.6, year: 2.6 },
@@ -2242,7 +2261,7 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
   // user-selectable window anymore).
   var HOURLY_WINDOW_DATA = {
     revenue: {
-      '4':  { values: [310, 530, 875, 750, 605, 475, 530, 680, 600, 405, 178], deltas: { prev: 3.2, year: 13.5 } }
+      '4':  { values: [2260, 3870, 6390, 5480, 4420, 3470, 3870, 4960, 4380, 2960, 1300], deltas: { prev: 3.2, year: 13.5 } }
     },
     margin: {
       '4':  { values: [41.0, 41.8, 42.9, 41.8, 41.1, 42.8, 43.6, 42.0, 41.0, 42.1, 42.7], deltas: { prev: 0.3, year: 1.6 } }
@@ -2261,7 +2280,7 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
   // week/prior-week daily totals already used by the "By Day" view, so the two views
   // stay internally consistent with each other.
   var THIS_WEEK_HOURLY = {
-    revenue:      { thisWeek: [517, 872, 1437, 1227, 985, 775, 872, 1114, 985, 662, 291], priorWeek: [450, 830, 1318, 1040, 966, 799, 779, 1051, 821, 613, 306] },
+    revenue:      { thisWeek: [3775, 6365, 10490, 8955, 7190, 5660, 6365, 8130, 7190, 4835, 2125], priorWeek: [3285, 6060, 9620, 7590, 7050, 5835, 5685, 7670, 5995, 4475, 2235] },
     transactions: { thisWeek: [30, 68, 144, 114, 83, 61, 76, 99, 91, 61, 23],               priorWeek: [26, 63, 132, 98, 76, 63, 68, 93, 76, 56, 24] }
   };
   // avgTicket isn't independently authored — it's derived the same way the rest of the
@@ -2556,7 +2575,62 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
     { name: 'Small Batch Rabbit Formula', brand: 'Small Batch', category: 'Supplements', species: 'Small Pet', size: 'Small', price: 21.99, avgUnitsWk: 3, avgSalesWk: 65.97, unitsTrend: 0.6, salesTrend: 1.1 },
     { name: 'Earthbath Oatmeal Shampoo 16oz', brand: 'Earthbath', category: 'Grooming & Supplies', species: 'Dog', size: 'Medium', price: 14.99, avgUnitsWk: 9, avgSalesWk: 134.91, unitsTrend: 5.7, salesTrend: 6.2 },
     { name: 'Arm & Hammer Clump Litter 28#', brand: 'Arm & Hammer', category: 'Grooming & Supplies', species: 'Cat', size: 'Large', price: 16.99, avgUnitsWk: 20, avgSalesWk: 339.80, unitsTrend: 9.7, salesTrend: 10.2 },
-    { name: 'PetSafe Slow Feed Bowl', brand: 'PetSafe', category: 'Grooming & Supplies', species: 'Dog', size: 'Medium', price: 12.99, avgUnitsWk: 6, avgSalesWk: 77.94, unitsTrend: 3.6, salesTrend: 4.2 }
+    { name: 'PetSafe Slow Feed Bowl', brand: 'PetSafe', category: 'Grooming & Supplies', species: 'Dog', size: 'Medium', price: 12.99, avgUnitsWk: 6, avgSalesWk: 77.94, unitsTrend: 3.6, salesTrend: 4.2 },
+    { name: 'Purina Pro Plan Adult Chicken & Rice 35#', brand: 'Purina', category: 'Food', species: 'Dog', size: 'Large', price: 54.99, avgUnitsWk: 26, avgSalesWk: 1429.74, unitsTrend: 3.7, salesTrend: 3.4 },
+    { name: "Hill's Science Diet Adult Chicken 30#", brand: "Hill's Science Diet", category: 'Food', species: 'Dog', size: 'Large', price: 59.99, avgUnitsWk: 24, avgSalesWk: 1439.76, unitsTrend: -2.1, salesTrend: -2.1 },
+    { name: 'Royal Canin Feline Health Nutrition 15#', brand: 'Royal Canin', category: 'Food', species: 'Cat', size: 'Medium', price: 49.99, avgUnitsWk: 20, avgSalesWk: 999.80, unitsTrend: 5.3, salesTrend: 5.8 },
+    { name: 'Merrick Grain-Free Real Salmon 22#', brand: 'Merrick', category: 'Food', species: 'Dog', size: 'Large', price: 64.99, avgUnitsWk: 14, avgSalesWk: 909.86, unitsTrend: 7.8, salesTrend: 7.6 },
+    { name: 'Fromm Four-Star Nutritionals 30#', brand: 'Fromm', category: 'Food', species: 'Dog', size: 'Large', price: 69.99, avgUnitsWk: 12, avgSalesWk: 839.88, unitsTrend: 0.3, salesTrend: 0.0 },
+    { name: 'Natural Balance L.I.D. Sweet Potato & Fish 24#', brand: 'Natural Balance', category: 'Food', species: 'Dog', size: 'Large', price: 54.99, avgUnitsWk: 13, avgSalesWk: 714.87, unitsTrend: -3.0, salesTrend: -2.7 },
+    { name: 'American Journey Salmon & Sweet Potato 24#', brand: 'American Journey', category: 'Food', species: 'Dog', size: 'Large', price: 44.99, avgUnitsWk: 15, avgSalesWk: 674.85, unitsTrend: -6.1, salesTrend: -6.2 },
+    { name: 'Instinct Raw Boost Grain-Free 20#', brand: 'Instinct', category: 'Food', species: 'Dog', size: 'Medium', price: 58.99, avgUnitsWk: 10, avgSalesWk: 589.90, unitsTrend: 3.9, salesTrend: 4.3 },
+    { name: 'Solid Gold Fit & Fabulous 24#', brand: 'Solid Gold', category: 'Food', species: 'Dog', size: 'Large', price: 49.99, avgUnitsWk: 11, avgSalesWk: 549.89, unitsTrend: -3.0, salesTrend: -2.6 },
+    { name: 'Diamond Naturals Extreme Athlete 40#', brand: 'Diamond Naturals', category: 'Food', species: 'Dog', size: 'Large', price: 45.99, avgUnitsWk: 12, avgSalesWk: 551.88, unitsTrend: 6.5, salesTrend: 6.2 },
+    { name: 'Purina Tidy Cats Clumping Litter 35#', brand: 'Purina', category: 'Grooming & Supplies', species: 'Cat', size: 'Large', price: 19.99, avgUnitsWk: 45, avgSalesWk: 899.55, unitsTrend: 6.4, salesTrend: 6.9 },
+    { name: 'Fresh Step Clumping Litter 25#', brand: 'Fresh Step', category: 'Grooming & Supplies', species: 'Cat', size: 'Large', price: 16.99, avgUnitsWk: 38, avgSalesWk: 645.62, unitsTrend: -1.1, salesTrend: -1.2 },
+    { name: "World's Best Cat Litter 28#", brand: "World's Best Cat Litter", category: 'Grooming & Supplies', species: 'Cat', size: 'Large', price: 24.99, avgUnitsWk: 22, avgSalesWk: 549.78, unitsTrend: 8.8, salesTrend: 8.9 },
+    { name: 'Litter Genie Refill 3-Pack', brand: 'Litter Genie', category: 'Grooming & Supplies', species: 'Cat', size: 'Medium', price: 14.99, avgUnitsWk: 20, avgSalesWk: 299.80, unitsTrend: -5.0, salesTrend: -5.2 },
+    { name: 'Seresto Flea & Tick Collar Dog', brand: 'Seresto', category: 'Grooming & Supplies', species: 'Dog', size: 'Medium', price: 59.99, avgUnitsWk: 14, avgSalesWk: 839.86, unitsTrend: 7.1, salesTrend: 7.5 },
+    { name: 'Frontline Plus 6-Pack Dog', brand: 'Frontline', category: 'Grooming & Supplies', species: 'Dog', size: 'Medium', price: 54.99, avgUnitsWk: 12, avgSalesWk: 659.88, unitsTrend: 6.4, salesTrend: 7.0 },
+    { name: 'K9 Advantix II 6-Pack', brand: 'K9 Advantix', category: 'Grooming & Supplies', species: 'Dog', size: 'Medium', price: 52.99, avgUnitsWk: 9, avgSalesWk: 476.91, unitsTrend: 2.1, salesTrend: 3.0 },
+    { name: 'Outward Hound Fun Feeder Slow Bowl', brand: 'Outward Hound', category: 'Grooming & Supplies', species: 'Dog', size: 'Medium', price: 13.99, avgUnitsWk: 16, avgSalesWk: 223.84, unitsTrend: -0.4, salesTrend: -0.0 },
+    { name: 'Chuckit! Ultra Ball Launcher', brand: 'Chuckit!', category: 'Toys', species: 'Dog', size: 'Medium', price: 16.99, avgUnitsWk: 13, avgSalesWk: 220.87, unitsTrend: 6.8, salesTrend: 7.2 },
+    { name: 'West Paw Zogoflex Toppl Toy', brand: 'West Paw', category: 'Toys', species: 'Dog', size: 'Medium', price: 21.99, avgUnitsWk: 9, avgSalesWk: 197.91, unitsTrend: 7.3, salesTrend: 7.7 },
+    { name: 'ZippyPaws Skinny Peltz', brand: 'ZippyPaws', category: 'Toys', species: 'Dog', size: 'Small', price: 12.99, avgUnitsWk: 14, avgSalesWk: 181.86, unitsTrend: 4.8, salesTrend: 4.6 },
+    { name: 'Petstages Cat Tracks Toy', brand: 'Petstages', category: 'Toys', species: 'Cat', size: 'Small', price: 11.99, avgUnitsWk: 11, avgSalesWk: 131.89, unitsTrend: -2.9, salesTrend: -2.9 },
+    { name: "Stella & Chewy's Freeze-Dried Dinner Patties 14oz", brand: "Stella & Chewy's", category: 'Food', species: 'Dog', size: 'Medium', price: 39.99, avgUnitsWk: 10, avgSalesWk: 399.90, unitsTrend: -5.2, salesTrend: -5.2 },
+    { name: "Vet's Best Hip & Joint Supplement", brand: "Vet's Best", category: 'Supplements', species: 'Dog', size: 'Medium', price: 18.99, avgUnitsWk: 9, avgSalesWk: 170.91, unitsTrend: -4.9, salesTrend: -4.9 },
+    { name: 'Blue Buffalo Life Protection Formula 30#', brand: 'Blue Buffalo', category: 'Food', species: 'Dog', size: 'Large', price: 52.99, avgUnitsWk: 18, avgSalesWk: 953.82, unitsTrend: 3.7, salesTrend: 3.8 },
+    { name: 'Taste of The Wild High Prairie 28#', brand: 'Taste of The Wild', category: 'Food', species: 'Dog', size: 'Large', price: 59.99, avgUnitsWk: 14, avgSalesWk: 839.86, unitsTrend: -0.6, salesTrend: -0.6 },
+    { name: 'Wellness CORE Puppy 24#', brand: 'Wellness', category: 'Food', species: 'Dog', size: 'Medium', price: 44.99, avgUnitsWk: 12, avgSalesWk: 539.88, unitsTrend: -2.2, salesTrend: -1.4 },
+    { name: 'Nutro Ultra Adult 30#', brand: 'Nutro', category: 'Food', species: 'Dog', size: 'Large', price: 54.99, avgUnitsWk: 13, avgSalesWk: 714.87, unitsTrend: 3.9, salesTrend: 4.3 },
+    { name: 'Eukanuba Adult Maintenance 30#', brand: 'Eukanuba', category: 'Food', species: 'Dog', size: 'Large', price: 42.99, avgUnitsWk: 14, avgSalesWk: 601.86, unitsTrend: -3.8, salesTrend: -3.2 },
+    { name: 'IAMS ProActive Health 30#', brand: 'IAMS', category: 'Food', species: 'Dog', size: 'Large', price: 34.99, avgUnitsWk: 16, avgSalesWk: 559.84, unitsTrend: -3.9, salesTrend: -3.7 },
+    { name: 'Purina ONE SmartBlend 31#', brand: 'Purina', category: 'Food', species: 'Dog', size: 'Large', price: 39.99, avgUnitsWk: 18, avgSalesWk: 719.82, unitsTrend: 9.3, salesTrend: 9.8 },
+    { name: 'Rachael Ray Nutrish Zero Grain 23#', brand: 'Rachael Ray Nutrish', category: 'Food', species: 'Dog', size: 'Large', price: 44.99, avgUnitsWk: 10, avgSalesWk: 449.90, unitsTrend: 2.4, salesTrend: 2.9 },
+    { name: 'Nutrisource Grain Free 26#', brand: 'Nutrisource', category: 'Food', species: 'Dog', size: 'Large', price: 52.99, avgUnitsWk: 9, avgSalesWk: 476.91, unitsTrend: 7.0, salesTrend: 7.6 },
+    { name: 'Weruva Cat Food Cans (Case of 24)', brand: 'Weruva', category: 'Food', species: 'Cat', size: 'Small', price: 29.99, avgUnitsWk: 14, avgSalesWk: 419.86, unitsTrend: -2.8, salesTrend: -3.1 },
+    { name: 'Tiki Cat Grill Variety Pack', brand: 'Tiki Cat', category: 'Food', species: 'Cat', size: 'Small', price: 19.99, avgUnitsWk: 16, avgSalesWk: 319.84, unitsTrend: -1.5, salesTrend: -1.5 },
+    { name: 'Fancy Feast Variety Pack 30ct', brand: 'Fancy Feast', category: 'Food', species: 'Cat', size: 'Small', price: 16.99, avgUnitsWk: 22, avgSalesWk: 373.78, unitsTrend: -3.1, salesTrend: -2.3 },
+    { name: 'Friskies Indoor Dry Cat Food 22#', brand: 'Friskies', category: 'Food', species: 'Cat', size: 'Large', price: 24.99, avgUnitsWk: 14, avgSalesWk: 349.86, unitsTrend: 7.5, salesTrend: 7.6 },
+    { name: 'Meow Mix Original Choice 22#', brand: 'Meow Mix', category: 'Food', species: 'Cat', size: 'Large', price: 19.99, avgUnitsWk: 12, avgSalesWk: 239.88, unitsTrend: 4.0, salesTrend: 4.2 },
+    { name: 'Scoop Away Cat Litter 42#', brand: 'Scoop Away', category: 'Grooming & Supplies', species: 'Cat', size: 'Large', price: 18.99, avgUnitsWk: 20, avgSalesWk: 379.80, unitsTrend: 8.1, salesTrend: 8.4 },
+    { name: 'Hartz UltraGuard Flea Collar', brand: 'Hartz', category: 'Grooming & Supplies', species: 'Dog', size: 'Medium', price: 12.99, avgUnitsWk: 20, avgSalesWk: 259.80, unitsTrend: -2.3, salesTrend: -2.3 },
+    { name: 'Adams Plus Flea & Tick Spray', brand: 'Adams', category: 'Grooming & Supplies', species: 'Dog', size: 'Medium', price: 14.99, avgUnitsWk: 15, avgSalesWk: 224.85, unitsTrend: 2.5, salesTrend: 2.5 },
+    { name: 'Virbac C.E.T. Enzymatic Toothpaste', brand: 'Virbac', category: 'Grooming & Supplies', species: 'Dog', size: 'Small', price: 11.99, avgUnitsWk: 12, avgSalesWk: 143.88, unitsTrend: 2.9, salesTrend: 3.7 },
+    { name: 'Trixie Cat Activity Board', brand: 'Trixie', category: 'Toys', species: 'Cat', size: 'Medium', price: 24.99, avgUnitsWk: 8, avgSalesWk: 199.92, unitsTrend: -0.1, salesTrend: -0.1 },
+    { name: 'Ruffwear Front Range Harness', brand: 'Ruffwear', category: 'Grooming & Supplies', species: 'Dog', size: 'Medium', price: 39.99, avgUnitsWk: 8, avgSalesWk: 319.92, unitsTrend: 9.5, salesTrend: 9.8 },
+    { name: 'PetSafe Easy Walk Harness', brand: 'PetSafe', category: 'Grooming & Supplies', species: 'Dog', size: 'Medium', price: 29.99, avgUnitsWk: 10, avgSalesWk: 299.90, unitsTrend: -5.0, salesTrend: -5.2 },
+    { name: "Hill's Prescription Diet w/d 27.5#", brand: "Hill's Science Diet", category: 'Food', species: 'Dog', size: 'Large', price: 74.99, avgUnitsWk: 20, avgSalesWk: 1499.80, unitsTrend: -4.7, salesTrend: -4.2 },
+    { name: 'Royal Canin Veterinary Diet Urinary SO 17.6#', brand: 'Royal Canin', category: 'Food', species: 'Cat', size: 'Medium', price: 64.99, avgUnitsWk: 18, avgSalesWk: 1169.82, unitsTrend: 6.2, salesTrend: 6.4 },
+    { name: 'Purina Pro Plan Veterinary EN 28#', brand: 'Purina', category: 'Food', species: 'Dog', size: 'Large', price: 79.99, avgUnitsWk: 16, avgSalesWk: 1279.84, unitsTrend: -5.5, salesTrend: -5.3 },
+    { name: 'ACANA Wild Prairie 25#', brand: 'ACANA', category: 'Food', species: 'Dog', size: 'Large', price: 74.99, avgUnitsWk: 14, avgSalesWk: 1049.86, unitsTrend: 9.4, salesTrend: 9.7 },
+    { name: 'Orijen Original Dog 25#', brand: 'Orijen', category: 'Food', species: 'Dog', size: 'Large', price: 89.99, avgUnitsWk: 12, avgSalesWk: 1079.88, unitsTrend: 9.0, salesTrend: 9.7 },
+    { name: 'Farmina N&D Ancestral Grain 26#', brand: 'Farmina', category: 'Food', species: 'Dog', size: 'Large', price: 79.99, avgUnitsWk: 10, avgSalesWk: 799.90, unitsTrend: -6.3, salesTrend: -5.7 },
+    { name: 'Victor Nutra Pro 40#', brand: 'Victor', category: 'Food', species: 'Dog', size: 'Large', price: 54.99, avgUnitsWk: 14, avgSalesWk: 769.86, unitsTrend: 4.4, salesTrend: 4.7 },
+    { name: '4health All Life Stages 40#', brand: '4health', category: 'Food', species: 'Dog', size: 'Large', price: 32.99, avgUnitsWk: 20, avgSalesWk: 659.80, unitsTrend: -2.2, salesTrend: -1.7 },
+    { name: 'Petcurean GO! Solutions 22#', brand: 'Petcurean', category: 'Food', species: 'Dog', size: 'Medium', price: 59.99, avgUnitsWk: 10, avgSalesWk: 599.90, unitsTrend: -4.7, salesTrend: -4.5 },
+    { name: 'Acana Regionals Cat 10#', brand: 'ACANA', category: 'Food', species: 'Cat', size: 'Medium', price: 42.99, avgUnitsWk: 12, avgSalesWk: 515.88, unitsTrend: 0.8, salesTrend: 1.6 }
   ];
 
   function priceBucket(price) {
@@ -2702,21 +2776,37 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
     var speciesFilter = root.querySelector('[data-role="filter-species"]');
     var nameTh = root.querySelector('[data-role="name-th"]');
     var tbody = root.querySelector('[data-role="list"]');
+    var badgeEl = root.querySelector('.sample-badge');
     if (!tbody) return;
     var view = 'category';
+    // Starts on the small hand-written sample; swapped out for the real
+    // Lightspeed catalog (see window.__refreshProductPerformance below) once
+    // data.json's `products` array arrives from the sync script.
+    var productData = TOP_SELLERS_PRODUCTS;
 
-    uniqueSorted(TOP_SELLERS_PRODUCTS.map(function(p) { return p.category; })).forEach(function(c) {
-      var opt = document.createElement('option'); opt.value = c; opt.textContent = c; catFilter.appendChild(opt);
-    });
-    uniqueSorted(TOP_SELLERS_PRODUCTS.map(function(p) { return p.brand; })).forEach(function(b) {
-      var opt = document.createElement('option'); opt.value = b; opt.textContent = b; brandFilter.appendChild(opt);
-    });
-    uniqueSorted(TOP_SELLERS_PRODUCTS.map(function(p) { return p.species; })).forEach(function(s) {
-      var opt = document.createElement('option'); opt.value = s; opt.textContent = s; speciesFilter.appendChild(opt);
-    });
+    function clearFilterOptions(sel) {
+      // Keep the first "All ..." option, drop everything appended after it.
+      while (sel.options.length > 1) sel.remove(1);
+    }
+
+    function populateFilters(products) {
+      clearFilterOptions(catFilter);
+      clearFilterOptions(brandFilter);
+      clearFilterOptions(speciesFilter);
+      uniqueSorted(products.map(function(p) { return p.category; })).forEach(function(c) {
+        var opt = document.createElement('option'); opt.value = c; opt.textContent = c; catFilter.appendChild(opt);
+      });
+      uniqueSorted(products.map(function(p) { return p.brand; })).forEach(function(b) {
+        var opt = document.createElement('option'); opt.value = b; opt.textContent = b; brandFilter.appendChild(opt);
+      });
+      uniqueSorted(products.map(function(p) { return p.species; })).forEach(function(s) {
+        var opt = document.createElement('option'); opt.value = s; opt.textContent = s; speciesFilter.appendChild(opt);
+      });
+    }
+    populateFilters(productData);
 
     function filteredProducts() {
-      return TOP_SELLERS_PRODUCTS.filter(function(p) {
+      return productData.filter(function(p) {
         if (catFilter.value && p.category !== catFilter.value) return false;
         if (brandFilter.value && p.brand !== brandFilter.value) return false;
         if (speciesFilter.value && p.species !== speciesFilter.value) return false;
@@ -2764,9 +2854,16 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
       var growthEl12mo = document.getElementById('products-growth-12mo');
       var salesEl12wk = document.getElementById('products-sales-12wk');
       var growthEl12wk = document.getElementById('products-growth-12wk');
-      if (salesEl12mo) salesEl12mo.textContent = fmtCurrency(salesWkSum * 52);
+      // Drop to a smaller font once the formatted dollar value gets long enough (7 figures)
+      // that it would otherwise wrap mid-number inside the narrow hero tile.
+      function setKpiValue(el, text) {
+        if (!el) return;
+        el.textContent = text;
+        el.classList.toggle('shk-val-compact', text.length > 9);
+      }
+      setKpiValue(salesEl12mo, fmtCurrency(salesWkSum * 52));
       if (growthEl12mo) growthEl12mo.innerHTML = trendCellHtml(baseSalesGrowth * GROWTH_WINDOW_META['52wk'].scale);
-      if (salesEl12wk) salesEl12wk.textContent = fmtCurrency(salesWkSum * 12);
+      setKpiValue(salesEl12wk, fmtCurrency(salesWkSum * 12));
       if (growthEl12wk) growthEl12wk.innerHTML = trendCellHtml(baseSalesGrowth * GROWTH_WINDOW_META['12wk'].scale);
     }
 
@@ -2821,6 +2918,24 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
       if (sel) sel.addEventListener('change', render);
     });
     render();
+
+    // Called from renderReport() once data.json's real `products` array
+    // (from the extended sync script) arrives — swaps the small hand-written
+    // sample for the store's actual catalog, resets any filter selection that
+    // may no longer apply, and relabels the "Sample data" badge.
+    window.__refreshProductPerformance = function(products) {
+      if (!Array.isArray(products) || !products.length) return;
+      productData = products;
+      catFilter.value = '';
+      brandFilter.value = '';
+      speciesFilter.value = '';
+      populateFilters(productData);
+      if (badgeEl) {
+        badgeEl.textContent = 'Live data';
+        badgeEl.classList.add('live-badge');
+      }
+      render();
+    };
   })();
 
   // Products / Slow Movers: a detailed item/brand/movement/trend table, fully sample,

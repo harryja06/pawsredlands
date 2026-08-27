@@ -93,6 +93,10 @@ const HISTORY_WINDOW_DAYS = Number(process.env.HISTORY_WINDOW_DAYS || 84);
 const BACKFILL_DAYS = process.env.BACKFILL_DAYS ? Number(process.env.BACKFILL_DAYS) : 0;
 const BACKFILL_MAX_CHUNKS = Number(process.env.BACKFILL_MAX_CHUNKS || 600);
 const HISTORY_FILE = 'public/product-sales-history.json';
+const STORE_HISTORY_FILE = 'public/store-sales-history.json'; // ROUND 18: whole-store
+// daily totals (revenue/transactions/cost), the counterpart to HISTORY_FILE's
+// per-item breakdown — feeds data.dailyTotals for the dashboard's real "This
+// Week's Performance" / Overview daily view.
 
 function requireEnv(name) {
   const value = process.env[name];
@@ -293,7 +297,11 @@ async function fetchSalesForDateRange(tokenManager, accountId, rangeStart, range
     const page = await apiGet(tokenManager, accountId, 'Sale.json', [
       ['limit', String(limit)],
       ['offset', String(offset)],
-      ['load_relations', '["SaleLines","SaleLines.Item"]'],
+      // ROUND 18: added "Customer" so each sale carries its customer's own
+      // record (in particular Customer.createTime), used as a best-effort
+      // "new vs returning" signal in aggregate() below — see that function's
+      // comment for why this is a proxy rather than a guaranteed-accurate flag.
+      ['load_relations', '["SaleLines","SaleLines.Item","Customer"]'],
     ]);
 
     const batch = Array.isArray(page.Sale) ? page.Sale : page.Sale ? [page.Sale] : [];
@@ -471,6 +479,10 @@ async function fetchAllItems(tokenManager, accountId) {
         brand,
         category,
         species: inferSpecies(category, name),
+        // ROUND 18: cost, for a real avgMarginPct instead of the previously-missing
+        // field. avgCost (a rolling average of what was actually paid) is preferred
+        // over defaultCost (the manually-set list cost) when both are present.
+        cost: Number(item.avgCost || item.defaultCost || 0),
       });
     }
 
@@ -494,13 +506,73 @@ async function fetchAllItems(tokenManager, accountId) {
   return items;
 }
 
-function aggregate(sales) {
+/**
+ * ---------------------------------------------------------------------
+ * ROUND 18 UPDATE: restored/completed the dashboard's other summary fields
+ * ---------------------------------------------------------------------
+ * The Round 14 rewrite of this function only ever computed totalRevenue,
+ * transactionCount, and topItems — every other field the dashboard's hero
+ * tiles and widgets read from data.json (avgTransactionValue, avgMarginPct,
+ * avgUnitsPerTransaction, busiestHour, newCustomers/returningCustomers,
+ * topBrands, revenueByCategory) was silently missing, which is why those
+ * tiles were showing $0.00 / 0.0 / "—" once a real sync finally completed
+ * end-to-end. This restores all of them using data already being pulled
+ * (the item catalog, for brand/category/cost) plus one added Sale relation
+ * (Customer, for the new-vs-returning heuristic below).
+ *
+ * @param {Array} sales - completed Sale records for the target date.
+ * @param {Map<string, object>} catalogById - itemID -> catalog entry (name,
+ * brand, category, cost), built from fetchAllItems()'s output.
+ * @param {boolean} costDataAvailable - whether ANY item in the catalog has a
+ * nonzero cost. Lightspeed returns "0" for cost whether it's genuinely zero
+ * or simply never entered, and most real retail items are never truly free
+ * to stock — so if every item comes back at 0 cost, this is treated as
+ * "this account doesn't track item cost," and avgMarginPct is reported as
+ * unavailable (null, shown as "—" on the dashboard) rather than a
+ * meaningless "100% margin."
+ */
+function aggregate(sales, catalogById, costDataAvailable) {
   let totalRevenue = 0;
-  let transactionCount = sales.length;
+  let totalUnits = 0;
+  let totalCost = 0;
+  const transactionCount = sales.length;
   const itemRevenue = new Map();
+  const brandRevenue = new Map();
+  const categoryRevenue = new Map();
+  const hourlyCounts = new Map(); // hour (0-23, UTC) -> transaction count
+  const seenCustomersToday = new Set();
+  let newCustomers = 0;
+  let returningCustomers = 0;
 
   for (const sale of sales) {
     totalRevenue += Number(sale.total || 0);
+
+    const saleDate = new Date(sale.timeStamp);
+    const hour = saleDate.getUTCHours();
+    hourlyCounts.set(hour, (hourlyCounts.get(hour) || 0) + 1);
+
+    // New vs returning: a sale with no attached customer (walk-in, or the
+    // account's generic customerID 0) counts toward transactionCount but
+    // isn't attributable to a person, so it's excluded from both counts —
+    // same treatment the dashboard's own "customers/day" tile expects.
+    // For a sale that IS attached to a customer, "new" is a best-effort
+    // proxy: the Customer record's own createTime falls on this same
+    // calendar day. Lightspeed doesn't expose a direct "this was their
+    // first-ever purchase" flag, so this is an assumption, not a
+    // certainty — documented here the same way the species-inference
+    // heuristic is documented above, in case it needs tuning later.
+    const cust = sale.Customer;
+    const custId = cust && cust.customerID ? String(cust.customerID) : null;
+    if (custId && custId !== '0' && !seenCustomersToday.has(custId)) {
+      seenCustomersToday.add(custId);
+      const createdDateStr = cust.createTime ? new Date(cust.createTime).toISOString().slice(0, 10) : null;
+      const saleDateStr = saleDate.toISOString().slice(0, 10);
+      if (createdDateStr && createdDateStr === saleDateStr) {
+        newCustomers += 1;
+      } else {
+        returningCustomers += 1;
+      }
+    }
 
     const lines = Array.isArray(sale.SaleLines?.SaleLine)
       ? sale.SaleLines.SaleLine
@@ -509,22 +581,102 @@ function aggregate(sales) {
       : [];
 
     for (const line of lines) {
-      const name = line.Item?.description || `Item #${line.itemID}`;
+      const itemId = String(line.itemID);
+      const qty = Number(line.unitQuantity || 0);
       const lineTotal = Number(line.calcTotal || line.unitPrice * line.unitQuantity || 0);
+      totalUnits += qty;
+
+      const catalogItem = catalogById.get(itemId);
+      const name = line.Item?.description || catalogItem?.name || `Item #${itemId}`;
       itemRevenue.set(name, (itemRevenue.get(name) || 0) + lineTotal);
+
+      if (catalogItem) {
+        brandRevenue.set(catalogItem.brand, (brandRevenue.get(catalogItem.brand) || 0) + lineTotal);
+        categoryRevenue.set(catalogItem.category, (categoryRevenue.get(catalogItem.category) || 0) + lineTotal);
+        totalCost += (catalogItem.cost || 0) * qty;
+      }
     }
   }
 
-  const topItems = [...itemRevenue.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([name, revenue]) => ({ name, revenue: Math.round(revenue * 100) / 100 }));
+  function topN(map, n) {
+    return [...map.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, n)
+      .map(([name, revenue]) => ({ name, revenue: Math.round(revenue * 100) / 100 }));
+  }
+
+  const topItems = topN(itemRevenue, 5);
+  const topBrands = topN(brandRevenue, 5);
+  const revenueByCategory = topN(categoryRevenue, 5);
+
+  let busiestHour = null;
+  let busiestHourCount = 0;
+  const hourlyCountsArr = [];
+  for (const [hour, count] of hourlyCounts.entries()) {
+    hourlyCountsArr.push({ hour, count });
+    if (count > busiestHourCount) {
+      busiestHourCount = count;
+      busiestHour = hour;
+    }
+  }
+  hourlyCountsArr.sort((a, b) => a.hour - b.hour);
+
+  const avgTransactionValue = transactionCount > 0 ? Math.round((totalRevenue / transactionCount) * 100) / 100 : 0;
+  const avgUnitsPerTransaction = transactionCount > 0 ? Math.round((totalUnits / transactionCount) * 10) / 10 : 0;
+  const avgMarginPct =
+    costDataAvailable && totalRevenue > 0
+      ? Math.round(((totalRevenue - totalCost) / totalRevenue) * 1000) / 10
+      : null;
 
   return {
     totalRevenue: Math.round(totalRevenue * 100) / 100,
     transactionCount,
+    avgTransactionValue,
+    avgUnitsPerTransaction,
+    avgMarginPct,
     topItems,
+    topBrands,
+    revenueByCategory,
+    hourlyCounts: hourlyCountsArr,
+    busiestHour,
+    busiestHourCount,
+    newCustomers,
+    returningCustomers,
   };
+}
+
+/**
+ * Groups a list of Sale records into whole-store daily totals:
+ * { 'YYYY-MM-DD': { revenue, transactionCount, cost } }. This is the
+ * store-wide counterpart to aggregatePerItemByDate() below — same
+ * per-day bucketing, just summed across the whole store instead of
+ * per item — used to feed the dashboard's "This Week's Performance"
+ * and Overview-tab daily view with real dates and real figures instead
+ * of the static sample arrays those used to run on entirely.
+ */
+function aggregateDailyTotals(sales, catalogById) {
+  const byDate = {};
+  for (const sale of sales) {
+    const dateStr = new Date(sale.timeStamp).toISOString().slice(0, 10);
+    if (!byDate[dateStr]) byDate[dateStr] = { revenue: 0, transactionCount: 0, cost: 0 };
+    const day = byDate[dateStr];
+    day.revenue += Number(sale.total || 0);
+    day.transactionCount += 1;
+
+    const lines = Array.isArray(sale.SaleLines?.SaleLine)
+      ? sale.SaleLines.SaleLine
+      : sale.SaleLines?.SaleLine
+      ? [sale.SaleLines.SaleLine]
+      : [];
+    for (const line of lines) {
+      const catalogItem = catalogById.get(String(line.itemID));
+      if (catalogItem) {
+        const qty = Number(line.unitQuantity || 0);
+        day.cost += (catalogItem.cost || 0) * qty;
+      }
+    }
+  }
+  return byDate;
 }
 
 /**
@@ -557,14 +709,14 @@ function aggregatePerItemByDate(sales) {
   return byDate;
 }
 
-async function loadHistory() {
+async function loadHistoryFile(filePath) {
   const fs = await import('node:fs/promises');
   try {
-    const raw = await fs.readFile(HISTORY_FILE, 'utf8');
+    const raw = await fs.readFile(filePath, 'utf8');
     return JSON.parse(raw);
   } catch (err) {
     if (err.code === 'ENOENT') return {};
-    console.warn(`Could not read ${HISTORY_FILE} (${err.message}) — starting a fresh history.`);
+    console.warn(`Could not read ${filePath} (${err.message}) — starting a fresh history.`);
     return {};
   }
 }
@@ -680,13 +832,28 @@ async function main() {
   const tokenManager = createTokenManager(await refreshAccessToken());
   const sales = await fetchSalesForDate(tokenManager, accountId, targetDateStr);
   const lowStock = await fetchLowStockItems(tokenManager, accountId);
-  const summary = aggregate(sales);
 
-  console.log('Fetching full item catalog (brand/category)...');
+  console.log('Fetching full item catalog (brand/category/cost)...');
   const catalog = await fetchAllItems(tokenManager, accountId);
   console.log(`Catalog: ${catalog.length} active items across ${new Set(catalog.map((i) => i.brand)).size} brands.`);
+  const catalogById = new Map(catalog.map((item) => [item.itemID, item]));
 
-  let history = await loadHistory();
+  const costDataAvailable = catalog.some((item) => item.cost > 0);
+  if (!costDataAvailable) {
+    console.warn(
+      'No items in the catalog have a nonzero cost (avgCost/defaultCost) — this Lightspeed ' +
+      'account doesn\'t appear to have item cost data entered, so avgMarginPct will report as ' +
+      'unavailable ("—" on the dashboard) rather than a misleading number. Enter item costs in ' +
+      'Lightspeed to enable real margin tracking.'
+    );
+  }
+
+  // ROUND 18: aggregate() now needs the catalog (brand/category/cost lookups),
+  // so this runs after fetchAllItems() rather than right after fetchSalesForDate().
+  const summary = aggregate(sales, catalogById, costDataAvailable);
+
+  let history = await loadHistoryFile(HISTORY_FILE);
+  let storeHistory = await loadHistoryFile(STORE_HISTORY_FILE);
 
   if (BACKFILL_DAYS > 0) {
     console.log(`Backfill requested: pulling the ${BACKFILL_DAYS} days before ${targetDateStr}. This can take a while...`);
@@ -696,14 +863,35 @@ async function main() {
     const backfillSales = await fetchSalesForDateRange(tokenManager, accountId, backfillStart, targetStart, BACKFILL_MAX_CHUNKS);
     console.log(`Backfill pulled ${backfillSales.length} sales across ${BACKFILL_DAYS} days.`);
     history = mergeHistory(history, aggregatePerItemByDate(backfillSales));
+    storeHistory = mergeHistory(storeHistory, aggregateDailyTotals(backfillSales, catalogById));
   }
 
   // Always merge in yesterday's sales too (reusing the fetch already done
   // above for the existing totalRevenue/transactionCount summary).
   history = mergeHistory(history, aggregatePerItemByDate(sales));
   history = pruneHistory(history, targetDateStr);
+  storeHistory = mergeHistory(storeHistory, aggregateDailyTotals(sales, catalogById));
+  storeHistory = pruneHistory(storeHistory, targetDateStr);
 
   const products = computeProductStats(history, catalog);
+
+  const dailyTotals = Object.keys(storeHistory)
+    .sort()
+    .map((date) => {
+      const day = storeHistory[date];
+      const revenue = Math.round(day.revenue * 100) / 100;
+      const transactionCount = day.transactionCount;
+      return {
+        date,
+        revenue,
+        transactionCount,
+        avgTicket: transactionCount > 0 ? Math.round((revenue / transactionCount) * 100) / 100 : 0,
+        marginPct:
+          costDataAvailable && revenue > 0
+            ? Math.round(((revenue - day.cost) / revenue) * 1000) / 10
+            : null,
+      };
+    });
 
   const output = {
     generatedAt: now.toISOString(),
@@ -711,14 +899,20 @@ async function main() {
     ...summary,
     lowStockItems: lowStock,
     products,
+    dailyTotals,
   };
 
   const fs = await import('node:fs/promises');
   await fs.mkdir('public', { recursive: true });
   await fs.writeFile('public/data.json', JSON.stringify(output, null, 2));
   await fs.writeFile(HISTORY_FILE, JSON.stringify(history));
+  await fs.writeFile(STORE_HISTORY_FILE, JSON.stringify(storeHistory));
 
-  console.log(`Wrote public/data.json (${products.length} products) and ${HISTORY_FILE} (${Object.keys(history).length} days of history).`);
+  console.log(
+    `Wrote public/data.json (${products.length} products, ${dailyTotals.length} days of daily totals), ` +
+    `${HISTORY_FILE} (${Object.keys(history).length} days of per-item history), and ` +
+    `${STORE_HISTORY_FILE} (${Object.keys(storeHistory).length} days of store-wide history).`
+  );
 }
 
 main().catch((err) => {

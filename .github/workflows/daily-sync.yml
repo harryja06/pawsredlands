@@ -71,7 +71,17 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add public/data.json public/product-sales-history.json public/store-sales-history.json public/period-totals-state.json
+          # public/period-totals-state.json only gets created once a
+          # HISTORICAL_MONTHS pull has actually run at least once — a plain
+          # daily run (or a backfill_days-only run) never writes it. A bare
+          # `git add` listing a path that doesn't exist on disk fails the
+          # WHOLE command with exit 128 ("pathspec did not match any
+          # files") and stages NOTHING, not even the other three files that
+          # did update — so it must only be added when it's actually there.
+          git add public/data.json public/product-sales-history.json public/store-sales-history.json
+          if [ -f public/period-totals-state.json ]; then
+            git add public/period-totals-state.json
+          fi
           git diff --cached --quiet && echo "No changes to commit" || git commit -m "Daily Lightspeed data sync"
 
           # A slow run (e.g. a multi-week backfill) can take long enough that

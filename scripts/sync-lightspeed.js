@@ -42,6 +42,11 @@
  *   LS_ACCOUNT_ID
  *
  * Optional environment variables:
+ *   STORE_TIMEZONE        (default 'America/Los_Angeles' — the IANA zone the
+ *                          store trades in. ROUND 23: every day boundary and
+ *                          hourly bucket is derived in this zone. Before that
+ *                          they were derived in UTC, which booked each
+ *                          Pacific evening's sales to the following day.)
  *   LOW_STOCK_THRESHOLD   (default 5)
  *   HISTORY_WINDOW_DAYS   (default 84 — 12 weeks of rolling history kept)
  *   BACKFILL_DAYS         (default unset — see "Backfill mode" below)
@@ -126,6 +131,172 @@ const MONTHLY_VIEW_MAX_MONTHS = 12; // ROUND 22: only the most recent 12 months
 const HOURLY_TRAILING_DAYS = Number(process.env.HOURLY_TRAILING_DAYS || 28); // how many
 // of the most recent real days' hourly buckets to average for the Overview
 // tab's "today vs trailing 4 weeks" Hourly comparison.
+
+// ---------------------------------------------------------------------
+// ROUND 23: store-local time
+// ---------------------------------------------------------------------
+// Every date and hour in this script used to be derived in UTC
+// (toISOString().slice(0,10) for the day, getUTCHours() for the hour).
+// For a store in Pacific time that is simply wrong:
+//
+//   * A sale rung up at 5:00pm PDT on Aug 20 is 00:00 UTC on Aug 21, so it
+//     was being counted toward the WRONG DAY. Every evening's trade — the
+//     last 7 hours of a Pacific business day in summer — was landing on the
+//     following calendar day's revenue, transactions and cost.
+//   * The 24 hourly buckets were UTC hours, so a 9am-7pm PDT trading day
+//     was recorded in buckets 16-23 and 0-2 and would have rendered on the
+//     dashboard's "By Hour" axis as 4p...11p, 12a, 1a, 2a.
+//
+// Everything below now buckets by the store's own local day and hour.
+// Set STORE_TIMEZONE to any IANA zone name if the store ever moves or a
+// second location is added; the default matches Redlands, CA.
+const STORE_TIMEZONE = process.env.STORE_TIMEZONE || 'America/Los_Angeles';
+
+/**
+ * Minutes to ADD to a UTC instant to get store-local wall-clock time
+ * (negative west of Greenwich). Derived from Intl rather than hardcoded so
+ * daylight saving is handled automatically and correctly on the changeover
+ * days themselves.
+ */
+function tzOffsetMinutes(date) {
+  const parts = {};
+  for (const p of new Intl.DateTimeFormat('en-US', {
+    timeZone: STORE_TIMEZONE,
+    hour12: false,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  }).formatToParts(date)) {
+    parts[p.type] = p.value;
+  }
+  // Some ICU builds format midnight as hour "24" under hour12:false.
+  const asUtcMs = Date.UTC(
+    Number(parts.year), Number(parts.month) - 1, Number(parts.day),
+    Number(parts.hour) % 24, Number(parts.minute), Number(parts.second)
+  );
+  return Math.round((asUtcMs - date.getTime()) / 60000);
+}
+
+/**
+ * Store-local calendar parts for a UTC instant. Shifting the instant by the
+ * zone offset and then reading it back with the getUTC* accessors is the
+ * standard trick for "read this moment as if it were local" without pulling
+ * in a date library.
+ */
+function storeLocalParts(date) {
+  const shifted = new Date(date.getTime() + tzOffsetMinutes(date) * 60000);
+  const iso = shifted.toISOString();
+  return {
+    dateStr: iso.slice(0, 10),   // YYYY-MM-DD, store-local
+    monthKey: iso.slice(0, 7),   // YYYY-MM,    store-local
+    year: String(shifted.getUTCFullYear()),
+    hour: shifted.getUTCHours(), // 0-23,       store-local
+  };
+}
+
+/**
+ * The UTC instant at which a given store-local calendar day begins. Used to
+ * turn "yesterday, in store time" into the absolute range this script pulls
+ * and compares against. The offset is resolved twice because the first guess
+ * is evaluated at the wrong instant on the two DST changeover days a year.
+ */
+function storeLocalMidnightUtc(dateStr) {
+  const naive = new Date(`${dateStr}T00:00:00Z`);
+  const firstPass = new Date(naive.getTime() - tzOffsetMinutes(naive) * 60000);
+  const settled = tzOffsetMinutes(firstPass);
+  return new Date(naive.getTime() - settled * 60000);
+}
+
+/** Adds (or subtracts) whole days to a YYYY-MM-DD string. */
+function shiftDateStr(dateStr, deltaDays) {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + deltaDays);
+  return d.toISOString().slice(0, 10);
+}
+
+// ---------------------------------------------------------------------
+// ROUND 23: proper-case normalization for catalog text
+// ---------------------------------------------------------------------
+// Lightspeed catalogs are typically keyed in by hand at the register and
+// come back SHOUTING ("BLUE BUFFALO LIFE PROTECTION FORMULA 30#"). These
+// strings feed the dashboard's table rows AND its filter dropdowns, so they
+// are normalized once here, at the point the catalog is read, rather than in
+// the frontend — that way the JSON, the table, the dropdowns and any future
+// widget can never disagree about how a brand is spelled.
+//
+// Only strings that are entirely uppercase or entirely lowercase are
+// rewritten. Anything already in deliberate mixed case is passed through
+// untouched, which protects intentional styling (RAWZ, pH, iCare) that a
+// blanket title-case pass would flatten.
+//
+// NOTE: this is display text only. product-sales-history.json is keyed by
+// Lightspeed itemID, not by name, so changing the casing does NOT orphan any
+// accumulated trend history.
+
+// Kept lowercase in the middle of a name; still capitalized first or last.
+const MINOR_WORDS = new Set([
+  'a', 'an', 'and', 'as', 'at', 'but', 'by', 'for', 'from', 'in', 'into',
+  'nor', 'of', 'on', 'or', 'over', 'per', 'the', 'to', 'via', 'vs', 'with',
+]);
+
+// Tokens whose casing is fixed regardless of position. Extend this as the
+// real catalog turns up brands the generic rules get wrong.
+const FORCED_CASE = new Map(Object.entries({
+  k9: 'K9', ii: 'II', iii: 'III', iv: 'IV', vi: 'VI', vii: 'VII',
+  xs: 'XS', xl: 'XL', xxl: 'XXL', sm: 'SM', md: 'MD', lg: 'LG',
+  usa: 'USA', uk: 'UK', us: 'US', uv: 'UV', led: 'LED', pvc: 'PVC',
+  ph: 'pH', dha: 'DHA', epa: 'EPA', msm: 'MSM', ala: 'ALA', omega: 'Omega',
+  bpa: 'BPA', usda: 'USDA', aafco: 'AAFCO', grf: 'GRF',
+  // Brands that are genuinely styled in all caps. An all-caps brand is
+  // indistinguishable from a shouted one, so the only way to protect it is to
+  // name it here. Add to this list as the real catalog turns up more.
+  rawz: 'RAWZ', vetiq: 'VetIQ', petiq: 'PetIQ', nutrisource: 'NutriSource',
+}));
+
+// A number glued to a unit: 24OZ -> 24oz, 3.5LB -> 3.5lb, 12CT -> 12ct
+const NUMBER_UNIT = /^(\d+(?:\.\d+)?)(oz|lb|lbs|kg|g|mg|ml|l|ct|pk|pc|in|ft|iu|mm|cm|qt|gal)$/i;
+
+function properCaseToken(token, isFirst, isLast) {
+  const bare = token.replace(/[^a-z0-9]/gi, '').toLowerCase();
+  if (!bare) return token;
+
+  if (FORCED_CASE.has(bare)) {
+    return token.replace(/[a-z0-9]+/i, FORCED_CASE.get(bare));
+  }
+
+  const unit = token.match(NUMBER_UNIT);
+  if (unit) return unit[1] + unit[2].toLowerCase();
+
+  // Size/count tokens that lead with a digit and carry no real word:
+  // 30#, 6-PACK -> 30#, 6-Pack is handled by the segment logic below, but
+  // pure tokens like "30#" or "5.5#" just lowercase harmlessly.
+  if (/^\d/.test(token) && !/[a-z]{2,}/i.test(token)) return token.toLowerCase();
+
+  if (!isFirst && !isLast && MINOR_WORDS.has(bare)) return token.toLowerCase();
+
+  // Capitalize each hyphen-, slash- or period-separated segment
+  // (GRAIN-FREE -> Grain-Free, W/CHICKEN -> W/Chicken), then walk back the
+  // letter after an apostrophe so ZUKE'S becomes Zuke's rather than Zuke'S.
+  return token
+    .toLowerCase()
+    .replace(/[a-z][a-z']*/g, (word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .replace(/'([A-Z])/g, (m, c) => `'${c.toLowerCase()}`)
+    .replace(/^'([a-z])/, (m, c) => `'${c.toUpperCase()}`);
+}
+
+function toProperCase(value) {
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim().replace(/\s+/g, ' ');
+  if (!trimmed) return trimmed;
+
+  const hasLower = /[a-z]/.test(trimmed);
+  const hasUpper = /[A-Z]/.test(trimmed);
+  if (hasLower && hasUpper) return trimmed; // deliberate mixed case — leave alone
+
+  const tokens = trimmed.split(' ');
+  return tokens
+    .map((t, i) => properCaseToken(t, i === 0, i === tokens.length - 1))
+    .join(' ');
+}
 
 function requireEnv(name) {
   const value = process.env[name];
@@ -375,8 +546,13 @@ async function fetchSalesForDateRange(tokenManager, accountId, rangeStart, range
 
 /** Single-day convenience wrapper around fetchSalesForDateRange, used by the normal daily sync. */
 async function fetchSalesForDate(tokenManager, accountId, targetDateStr) {
-  const targetStart = new Date(`${targetDateStr}T00:00:00Z`);
-  const targetEnd = new Date(targetStart.getTime() + 24 * 60 * 60 * 1000); // exclusive, next midnight UTC
+  // ROUND 23: the window is the store's own calendar day, not a UTC day —
+  // midnight-to-midnight in STORE_TIMEZONE, expressed as absolute instants.
+  // storeLocalMidnightUtc() is called for both ends rather than adding 24h to
+  // the start, so the two DST changeover days (23h and 25h long) are covered
+  // exactly instead of being clipped or double-counted.
+  const targetStart = storeLocalMidnightUtc(targetDateStr);
+  const targetEnd = storeLocalMidnightUtc(shiftDateStr(targetDateStr, 1)); // exclusive
   return fetchSalesForDateRange(tokenManager, accountId, targetStart, targetEnd, 30);
 }
 
@@ -481,8 +657,11 @@ async function fetchHistoricalTotals(tokenManager, accountId, rangeStart, maxChu
       if (!isCompleted) continue;
 
       const revenue = Number(sale.total || 0);
-      const year = String(saleTime.getUTCFullYear());
-      const monthKey = saleTime.toISOString().slice(0, 7); // YYYY-MM
+      // ROUND 23: store-local month, so the evening of the last day of a
+      // month doesn't spill into the next month's total.
+      const local = storeLocalParts(saleTime);
+      const year = local.year;
+      const monthKey = local.monthKey; // YYYY-MM, store-local
 
       if (!state.yearly[year]) state.yearly[year] = { revenue: 0, transactionCount: 0 };
       state.yearly[year].revenue += revenue;
@@ -702,9 +881,14 @@ async function fetchAllItems(tokenManager, accountId) {
 
     for (const item of batch) {
       if (item.archived === 'true' || item.archived === true) continue;
-      const name = item.description || `Item #${item.itemID}`;
-      const brand = itemBrand(item);
-      const category = itemCategory(item);
+      // ROUND 23: normalized to proper case here, at the single point the
+      // catalog enters the pipeline, so the products array, the table rows and
+      // the filter dropdowns all read from the same normalized strings. Species
+      // inference runs on the normalized text too — SPECIES_RULES are
+      // case-insensitive, so this doesn't change what it matches.
+      const name = toProperCase(item.description || '') || `Item #${item.itemID}`;
+      const brand = toProperCase(itemBrand(item));
+      const category = toProperCase(itemCategory(item));
       items.push({
         itemID: String(item.itemID),
         name,
@@ -771,8 +955,8 @@ function aggregate(sales, catalogById, costDataAvailable) {
   const itemRevenue = new Map();
   const brandRevenue = new Map();
   const categoryRevenue = new Map();
-  const hourlyCounts = new Map(); // hour (0-23, UTC) -> transaction count
-  const hourlyRevenue = new Map(); // hour (0-23, UTC) -> revenue — ROUND 20: added
+  const hourlyCounts = new Map(); // hour (0-23, STORE-LOCAL) -> transaction count
+  const hourlyRevenue = new Map(); // hour (0-23, STORE-LOCAL) -> revenue — ROUND 20: added
   // alongside the existing count so the dashboard's Hourly view can show a real
   // revenue/avg-ticket pattern, not just transaction count.
   const seenCustomersToday = new Set();
@@ -784,7 +968,10 @@ function aggregate(sales, catalogById, costDataAvailable) {
     totalRevenue += saleTotal;
 
     const saleDate = new Date(sale.timeStamp);
-    const hour = saleDate.getUTCHours();
+    // ROUND 23: store-local hour, so busiestHour and the Overview tab's
+    // Hourly view describe the actual trading day rather than a UTC one.
+    const saleLocal = storeLocalParts(saleDate);
+    const hour = saleLocal.hour;
     hourlyCounts.set(hour, (hourlyCounts.get(hour) || 0) + 1);
     hourlyRevenue.set(hour, (hourlyRevenue.get(hour) || 0) + saleTotal);
 
@@ -802,8 +989,11 @@ function aggregate(sales, catalogById, costDataAvailable) {
     const custId = cust && cust.customerID ? String(cust.customerID) : null;
     if (custId && custId !== '0' && !seenCustomersToday.has(custId)) {
       seenCustomersToday.add(custId);
-      const createdDateStr = cust.createTime ? new Date(cust.createTime).toISOString().slice(0, 10) : null;
-      const saleDateStr = saleDate.toISOString().slice(0, 10);
+      // ROUND 23: both sides compared in store-local days, so a customer
+      // created during a Pacific evening isn't read as a different day than
+      // the sale that created them.
+      const createdDateStr = cust.createTime ? storeLocalParts(new Date(cust.createTime)).dateStr : null;
+      const saleDateStr = saleLocal.dateStr;
       if (createdDateStr && createdDateStr === saleDateStr) {
         newCustomers += 1;
       } else {
@@ -902,10 +1092,17 @@ function aggregate(sales, catalogById, costDataAvailable) {
  */
 function aggregateDailyTotals(sales, catalogById) {
   const byDate = {};
+  // Per-day customer sets, held aside so they can be counted into plain
+  // numbers at the end (a Set doesn't survive JSON.stringify).
+  const customersByDate = {};
+
   for (const sale of sales) {
     const saleDate = new Date(sale.timeStamp);
-    const dateStr = saleDate.toISOString().slice(0, 10);
-    const hour = saleDate.getUTCHours();
+    // ROUND 23: store-local day and hour. Previously both were UTC, which put
+    // every Pacific evening's sales on the following day and pushed the
+    // trading day's hourly buckets past midnight. See STORE_TIMEZONE above.
+    const { dateStr, hour } = storeLocalParts(saleDate);
+
     if (!byDate[dateStr]) {
       byDate[dateStr] = {
         revenue: 0,
@@ -913,6 +1110,7 @@ function aggregateDailyTotals(sales, catalogById) {
         cost: 0,
         hourly: Array.from({ length: 24 }, () => ({ revenue: 0, transactionCount: 0 })),
       };
+      customersByDate[dateStr] = { all: new Set(), fresh: new Set() };
     }
     const day = byDate[dateStr];
     const saleTotal = Number(sale.total || 0);
@@ -920,6 +1118,23 @@ function aggregateDailyTotals(sales, catalogById) {
     day.transactionCount += 1;
     day.hourly[hour].revenue += saleTotal;
     day.hourly[hour].transactionCount += 1;
+
+    // ROUND 23: per-day customer counts, using the Customer relation that is
+    // already being loaded for aggregate()'s new-vs-returning heuristic — so
+    // this costs no extra API calls. Same best-effort proxy as aggregate():
+    // a customer whose record was created on the day of the sale is treated
+    // as new. Walk-in sales carry no customer record and are simply not
+    // counted, so these are "identified customers", not footfall.
+    const customer = sale.Customer;
+    const customerId = customer && customer.customerID ? String(customer.customerID) : null;
+    if (customerId && customerId !== '0') {
+      const bucket = customersByDate[dateStr];
+      bucket.all.add(String(customerId));
+      const created = customer.createTime ? new Date(customer.createTime) : null;
+      if (created && !Number.isNaN(created.getTime()) && storeLocalParts(created).dateStr === dateStr) {
+        bucket.fresh.add(String(customerId));
+      }
+    }
 
     const lines = Array.isArray(sale.SaleLines?.SaleLine)
       ? sale.SaleLines.SaleLine
@@ -934,6 +1149,13 @@ function aggregateDailyTotals(sales, catalogById) {
       }
     }
   }
+
+  for (const [dateStr, bucket] of Object.entries(customersByDate)) {
+    byDate[dateStr].customerCount = bucket.all.size;
+    byDate[dateStr].newCustomerCount = bucket.fresh.size;
+    byDate[dateStr].returningCustomerCount = bucket.all.size - bucket.fresh.size;
+  }
+
   return byDate;
 }
 
@@ -945,7 +1167,9 @@ function aggregateDailyTotals(sales, catalogById) {
 function aggregatePerItemByDate(sales) {
   const byDate = {};
   for (const sale of sales) {
-    const dateStr = new Date(sale.timeStamp).toISOString().slice(0, 10);
+    // ROUND 23: store-local day, matching aggregateDailyTotals() above — the
+    // two history files must agree on which day a sale belongs to.
+    const dateStr = storeLocalParts(new Date(sale.timeStamp)).dateStr;
     const lines = Array.isArray(sale.SaleLines?.SaleLine)
       ? sale.SaleLines.SaleLine
       : sale.SaleLines?.SaleLine
@@ -1079,13 +1303,18 @@ function computeProductStats(history, catalog) {
 async function main() {
   const accountId = requireEnv('LS_ACCOUNT_ID');
 
-  // Report on "yesterday" (UTC) since the job runs once daily, typically
-  // early morning, and the full previous day is what's fully closed out.
+  // Report on "yesterday" since the job runs once daily, typically early
+  // morning, and the full previous day is what's fully closed out.
+  //
+  // ROUND 23: "yesterday" is now the store's own previous calendar day, not
+  // the previous UTC day. The cron fires at 07:00 UTC, which is midnight
+  // Pacific — so under the old UTC logic the script asked for a day that had
+  // only just ended in one timezone and not the other, and then bucketed the
+  // results into UTC days on top of that.
   const now = new Date();
-  const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  const targetDateStr = yesterday.toISOString().slice(0, 10);
+  const targetDateStr = shiftDateStr(storeLocalParts(now).dateStr, -1);
 
-  console.log(`Syncing Lightspeed data for ${targetDateStr}...`);
+  console.log(`Syncing Lightspeed data for ${targetDateStr} (store timezone: ${STORE_TIMEZONE})...`);
 
   const tokenManager = createTokenManager(await refreshAccessToken());
   const sales = await fetchSalesForDate(tokenManager, accountId, targetDateStr);
@@ -1115,9 +1344,10 @@ async function main() {
 
   if (BACKFILL_DAYS > 0) {
     console.log(`Backfill requested: pulling the ${BACKFILL_DAYS} days before ${targetDateStr}. This can take a while...`);
-    const targetStart = new Date(`${targetDateStr}T00:00:00Z`);
-    const backfillStart = new Date(targetStart);
-    backfillStart.setUTCDate(backfillStart.getUTCDate() - BACKFILL_DAYS);
+    // ROUND 23: both ends are store-local midnights, so the backfill covers
+    // whole trading days and lines up exactly with the daily sync's window.
+    const targetStart = storeLocalMidnightUtc(targetDateStr);
+    const backfillStart = storeLocalMidnightUtc(shiftDateStr(targetDateStr, -BACKFILL_DAYS));
     const backfillSales = await fetchSalesForDateRange(tokenManager, accountId, backfillStart, targetStart, BACKFILL_MAX_CHUNKS);
     console.log(`Backfill pulled ${backfillSales.length} sales across ${BACKFILL_DAYS} days.`);
     history = mergeHistory(history, aggregatePerItemByDate(backfillSales));
@@ -1148,6 +1378,14 @@ async function main() {
           costDataAvailable && revenue > 0
             ? Math.round(((revenue - day.cost) / revenue) * 1000) / 10
             : null,
+        // ROUND 23: real per-day identified-customer counts, so the dashboard's
+        // "Customers" metric can stop running on a sample array at the daily and
+        // weekly grain. null (not 0) on days recorded before this shipped, so
+        // the frontend can tell "no customers that day" apart from "this day
+        // predates customer tracking" and show an honest dash for the latter.
+        customerCount: day.customerCount ?? null,
+        newCustomerCount: day.newCustomerCount ?? null,
+        returningCustomerCount: day.returningCustomerCount ?? null,
         // ROUND 20: real per-hour breakdown for this day, rounded for the same
         // reason everything else here is — feeds the dashboard's real Hourly
         // views (see aggregateDailyTotals()'s comment).
@@ -1186,8 +1424,12 @@ async function main() {
   // than Monthly.
   let monthlyTotals = [];
   if (HISTORICAL_MONTHS > 0) {
-    const rangeStart = new Date(`${targetDateStr}T00:00:00Z`);
-    rangeStart.setUTCMonth(rangeStart.getUTCMonth() - Math.max(HISTORICAL_MONTHS, 1));
+    // ROUND 23: store-local midnight, for consistency with every other range
+    // boundary in this script. The walk still deliberately overshoots this
+    // start by up to one chunk, so a few hours either way changes nothing.
+    const rangeStartNaive = new Date(`${targetDateStr}T00:00:00Z`);
+    rangeStartNaive.setUTCMonth(rangeStartNaive.getUTCMonth() - Math.max(HISTORICAL_MONTHS, 1));
+    const rangeStart = storeLocalMidnightUtc(rangeStartNaive.toISOString().slice(0, 10));
 
     let periodState = await loadPeriodTotalsState();
     periodState = await fetchHistoricalTotals(tokenManager, accountId, rangeStart, HISTORICAL_MAX_CHUNKS, periodState);

@@ -455,37 +455,7 @@
   .combo-pair .count{font-family:'Lexend',sans-serif;font-weight:800;color:var(--mint-deep);font-size:14px;}
   .rank-badge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--navy);color:#fff;font-family:'Lexend',sans-serif;font-size:10.5px;font-weight:800;margin-right:10px;flex-shrink:0;}
 
-  /* ---------- PROMOTIONS ---------- */
-  .promo-card{
-    display:flex;justify-content:space-between;align-items:center;
-    padding:16px 18px;border:1px solid var(--line);border-left:3px solid var(--gold);
-    border-radius:3px;background:var(--paper);margin-bottom:10px;
-  }
-  .promo-card .left b{font-family:'Lexend',sans-serif;color:var(--navy);font-size:14.5px;}
-  .promo-card .left .msub{font-size:12px;color:var(--ink-soft);margin-top:4px;font-family:'DM Sans',sans-serif;}
-  .promo-card .right{text-align:right;font-family:'Lexend',sans-serif;}
-  .promo-card .right .m{color:var(--mint-deep);font-weight:800;font-size:17px;}
-  .promo-card .right .n{font-size:10.5px;color:var(--ink-soft);letter-spacing:0.05em;margin-top:2px;}
-
-  /* ---------- WEEKLY PROMOTION PLAN ---------- */
-  .plan-card{
-    border:1px solid var(--line);border-left:3px solid var(--rouge);border-radius:3px;
-    background:var(--paper);padding:20px 22px;margin-bottom:16px;
-  }
-  .plan-card h3{
-    font-family:'Lexend',sans-serif;font-size:16px;font-weight:800;color:var(--navy);margin:0 0 10px;
-    letter-spacing:0.01em;text-transform:none;
-  }
-  .plan-card .plan-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
-  .plan-badge{
-    font-family:'Lexend',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.04em;
-    padding:4px 10px;border-radius:20px;
-  }
-  .plan-badge.timing{background:rgba(34,38,31,0.08);color:var(--navy);}
-  .plan-badge.mechanic{background:rgba(194,23,75,0.1);color:var(--rouge);}
-  .plan-card .plan-why{font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--ink-soft);line-height:1.65;}
-
-  /* ---------- TIME SLOT RECOMMENDATIONS ---------- */
+/* ---------- TIME SLOT RECOMMENDATIONS ---------- */
   .timeslot-card{
     border:1px solid var(--line);border-left:3px solid var(--mint-deep);border-radius:3px;
     background:var(--paper);padding:20px 22px;margin-bottom:16px;
@@ -647,7 +617,6 @@ body{ background-image:none; }
   z-index:150;
 }
 .sidebar.collapsed .nav-group.locked:hover .nav-tooltip{ opacity:1; visibility:visible; transform:translate(0,-50%); }
-.nav-tooltip .nav-tooltip-soon{ color:var(--tan); font-weight:400; margin-left:6px; }
 
 .sidebar-footer{
   padding:18px 10px 22px; display:flex; flex-direction:column; align-items:center; gap:9px;
@@ -872,7 +841,7 @@ body{ background-image:none; }
 .sidebar-logo{ filter:none; background:#fff; border-radius:50%; padding:5px; box-sizing:border-box; }
 .sidebar.collapsed .sidebar-logo{ padding:3px; }
 
-/* ---------- PAWS: supplementary panel styles (Starter template) ---------- */
+/* ---------- PAWS: supplementary panel styles ---------- */
 .panel-card{
   background:var(--paper); border:1px solid var(--line); border-radius:14px;
   padding:26px 28px; margin-bottom:24px;
@@ -950,13 +919,8 @@ body{ background-image:none; }
 .panel-grid-3{ display:grid; grid-template-columns:1.1fr 1fr 1fr; gap:22px; }
 @media(max-width:860px){ .panel-grid-2, .panel-grid-3{ grid-template-columns:1fr; } }
 
-/* ---------- PAWS: page header row + tier badge (Customers/Staff = Basic tier) ---------- */
+/* ---------- PAWS: page header row ---------- */
 .section-head-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap; }
-.tier-badge{
-  display:inline-flex; align-items:center; font-family:'Lexend',sans-serif; font-size:10.5px; font-weight:700;
-  letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-soft); background:rgba(10,30,60,0.06);
-  border:1px solid var(--line); border-radius:20px; padding:5px 13px; white-space:nowrap; margin-top:2px;
-}
 
 /* ---------- PAWS: honest placeholder for pages with no data source connected yet ---------- */
 .placeholder-card{
@@ -964,10 +928,6 @@ body{ background-image:none; }
   text-align:center; color:var(--ink-soft); font-family:'DM Sans',sans-serif; font-size:14px; line-height:1.7;
 }
 .placeholder-card strong{ color:var(--ink); display:block; font-family:'Lexend',sans-serif; font-size:15.5px; margin-bottom:10px; letter-spacing:0.02em; text-transform:none; }
-
-/* ---------- PAWS: unlocked-but-limited nav groups no longer carry a Growth/Enterprise
-   text badge; Promotions (still locked) gets a plain lock glyph instead ---------- */
-.nav-lock-icon{ margin-left:auto; width:14px; height:14px; opacity:0.4; flex-shrink:0; }
 
 /* ---------- PAWS: panel title layout (was also home to an inline "Sample data"
    badge — removed dashboard-wide per request; kept as flex in case a future
@@ -1134,15 +1094,17 @@ body{ background-image:none; }
   flex:0 1 25% !important; max-width:25% !important;
 }
 .summary-hero-big{
-  font-family:'Playfair Display',serif; font-size:36px; font-weight:600; color:#fff;
+  font-family:'Playfair Display',serif; font-size:29px; font-weight:600; color:#fff;
   letter-spacing:0; text-transform:none; line-height:1.1;
 }
 .summary-hero-small{
   font-family:'Lexend',sans-serif; font-size:11px; font-weight:600; letter-spacing:0.24em;
   text-transform:uppercase; color:var(--mint); opacity:0.85;
 }
-.summary-hero-kpi{ padding:40px 22px; min-height:130px; justify-content:center; }
-.summary-hero-kpis{ gap:20px; }
+/* ROUND 28: hero tiles were 40px tall-padded with a 130px floor, which on top of the
+   percentage page padding below made the hero the tallest thing on every page. */
+.summary-hero-kpi{ padding:18px 20px; min-height:0; justify-content:center; }
+.summary-hero-kpis{ gap:14px; }
 .shk-val{ font-size:clamp(15px,2.4vw,24px); white-space:nowrap; }
 /* A handful of hero KPIs (e.g. Products' "Sales · Last 12 Mo.") can land on a long
    7-figure dollar value once real-scale sample data is used — drop to a smaller,
@@ -1169,20 +1131,16 @@ body{ background-image:none; }
 
 /* Every tab's hero used to sit below a page-level h2 title (e.g. "OVERVIEW", "STAFF") that
    duplicated the hero's own big heading, and that title row's structure differed slightly
-   between tabs (plain .section-head vs. .section-head-row with a tier-badge), which made
-   the top-of-page spacing inconsistent from one tab to another. That title row is now
-   removed everywhere (see the tab-panel markup) so the hero is the very first thing on
-   every page, with one uniform, tighter top margin instead of several different ones. The
-   "Basic" tier badge that used to live in that row (Staff, Customers) now sits inside the
-   hero itself instead of disappearing. */
-.summary-hero{ margin-top:16px; padding:5% 4%; }
-.summary-hero .tier-badge{
-  position:absolute; top:20px; right:24px; z-index:3;
-  background:rgba(255,255,255,0.12); border-color:rgba(255,255,255,0.28); color:rgba(255,255,255,0.85);
-}
-@media(max-width:480px){
-  .summary-hero .tier-badge{ top:12px; right:14px; font-size:9px; padding:4px 10px; }
-}
+   between tabs, which made the top-of-page spacing inconsistent from one tab to another.
+   That title row is now removed everywhere (see the tab-panel markup) so the hero is the
+   very first thing on every page, with one uniform, tighter top margin. */
+/* ROUND 28: the hero's padding was expressed as a PERCENTAGE of container width, so it
+   grew with the viewport — 5% of a 1400px page is 70px of padding above and below the
+   content, before the tiles' own padding. That is why the header dominated the page on a
+   wide screen while looking reasonable on a narrow one. Fixed units keep it consistent at
+   every width, and the media queries below still tighten it on small screens. */
+.summary-hero{ margin-top:14px; padding:22px 26px; }
+@media(max-width:760px){ .summary-hero{ padding:18px 18px; } }
 
 /* Task 5: hover tooltips on every chart's data points (This Week's Performance, History
    Trend, Labor Cost, Customer Trend all share renderBars()). */
@@ -1330,14 +1288,6 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
             <button class="tab-btn" data-tab="customers-overview"><span class="tab-dot"></span><img class="tab-icon" src="data:image/png;base64,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"><span class="tab-label">Overview</span></button>
           </div>
         </div>
-        <div class="nav-group locked" id="nav-group-promotions">
-          <button class="nav-parent-btn" id="nav-parent-promotions" aria-expanded="false" disabled>
-            <img class="tab-icon" src="data:image/png;base64,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">
-            <span class="tab-label">Promotions</span>
-            <svg class="nav-lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-          </button>
-          <div class="nav-tooltip">Promotions <span class="nav-tooltip-soon">Coming soon</span></div>
-        </div>
       </nav>
     </div>
 
@@ -1483,14 +1433,22 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
               <div class="summary-hero-small">Performance</div>
             </div>
             <div class="summary-hero-kpis">
-              <div class="summary-hero-kpi"><div class="shk-val" id="products-sales-12mo">&mdash;</div><div class="shk-lbl">Sales &middot; Last 12 Mo.</div></div>
-              <div class="summary-hero-kpi"><div class="shk-val" id="products-growth-12mo">&mdash;</div><div class="shk-lbl">Growth &middot; Last 12 Mo.</div></div>
-              <div class="summary-hero-kpi"><div class="shk-val" id="products-sales-12wk">&mdash;</div><div class="shk-lbl">Sales &middot; Last 12 Wks.</div></div>
-              <div class="summary-hero-kpi"><div class="shk-val" id="products-growth-12wk">&mdash;</div><div class="shk-lbl">Growth &middot; Last 12 Wks.</div></div>
+              <div class="summary-hero-kpi"><div class="shk-val" id="products-sales-12mo">&mdash;</div><div class="shk-lbl">Sales &middot; Last 4 Wks.</div></div>
+              <div class="summary-hero-kpi"><div class="shk-val" id="products-growth-12mo">&mdash;</div><div class="shk-lbl">Growth &middot; 4 Wks vs Prior</div></div>
+              <div class="summary-hero-kpi"><div class="shk-val" id="products-sales-12wk">&mdash;</div><div class="shk-lbl">Avg. Sales / Wk</div></div>
+              <div class="summary-hero-kpi"><div class="shk-val" id="products-growth-12wk">&mdash;</div><div class="shk-lbl">Growth &middot; 12 Wks</div></div>
             </div>
           </div>
 
-          <div class="section-head"><h2>Product Performance</h2><span class="info-icon" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><p class="section-dek">Toggle between category, brand, and product views, filter down to what you care about, and pick how far back to measure growth.</p></span></div>
+          <!-- ROUND 28: the "Product Performance" heading + info button is replaced by a
+               stat strip matching the other pages. Every figure here is computed from the
+               real catalog in data.json (products, lowStock) — no sample values. -->
+          <div class="summary-stats">
+            <div class="summary-stat"><div class="ss-lbl">Active SKUs</div><div class="ss-val" id="products-sku-count">&mdash;</div></div>
+            <div class="summary-stat"><div class="ss-lbl">Categories</div><div class="ss-val" id="products-category-count">&mdash;</div></div>
+            <div class="summary-stat"><div class="ss-lbl">Brands</div><div class="ss-val" id="products-brand-count">&mdash;</div></div>
+            <div class="summary-stat"><div class="ss-lbl">Low Stock Items</div><div class="ss-val" id="products-low-stock-count">&mdash;</div></div>
+          </div>
           <div class="panel-card" id="product-performance-widget">
             <div class="control-bar">
               <h3>Product Performance</h3>
@@ -1663,7 +1621,6 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
       <div class="tab-panel" data-tab="staff-overview">
         <section style="padding-top:8px;">
           <div class="summary-hero">
-            <span class="tier-badge">Basic</span>
             <div class="summary-hero-heading">
               <div class="summary-hero-big">Staff</div>
               <div class="summary-hero-small">Last 2 Weeks</div>
@@ -1711,9 +1668,9 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
             </div>
           </div>
 
-          <!-- Staffing-to-Sales Ratio by Shift: reserved for the future Growth-tier
+          <!-- Staffing-to-Sales Ratio by Shift: no data source connected; markup kept
                dashboard, per explicit instruction to keep this widget's markup/JS fully
-               intact but out of the Basic-tier view — hidden with display:none rather
+               intact but hidden with display:none rather
                than deleted (same "remember everything" pattern used for the Products /
                Performance tab). -->
           <div class="panel-card" id="staff-shift-ratio-widget" style="display:none;">
@@ -1731,7 +1688,6 @@ document.addEventListener('DOMContentLoaded', function initAuthState(){
       <div class="tab-panel" data-tab="customers-overview">
         <section style="padding-top:8px;">
           <div class="summary-hero">
-            <span class="tier-badge">Basic</span>
             <div class="summary-hero-heading">
               <div class="summary-hero-big">Customers</div>
               <div class="summary-hero-small">Last 4 Weeks</div>
@@ -1896,6 +1852,28 @@ function renderReport(data) {
   // Raw (non-HTML) category totals — kept in case a future widget wants real per-category
   // totals; nothing currently reads this.
   window.__realCategoryData = categories;
+
+  // ROUND 28: Products tab stat strip — all four figures come straight from the real
+  // catalog in data.json, so they are correct from the first sync with no extra work.
+  (function fillProductStats() {
+    var products = Array.isArray(data.products) ? data.products : [];
+    var lowStock = Array.isArray(data.lowStock) ? data.lowStock : [];
+    function uniq(key) {
+      var seen = {};
+      products.forEach(function(p) { if (p[key]) seen[p[key]] = 1; });
+      return Object.keys(seen).length;
+    }
+    function set(id, val) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = val;
+    }
+    if (!products.length) return; // leave the dashes in place
+    set('products-sku-count', fmtNumber(products.length));
+    set('products-category-count', fmtNumber(uniq('category')));
+    set('products-brand-count', fmtNumber(uniq('brand')));
+    set('products-low-stock-count', fmtNumber(lowStock.length));
+  })();
+
 
   // Top 10 individual items by revenue &mdash; cached for the Products / Overview
   // "Items" dropdown view (window.__realItemsHtml). Built as a string rather than
@@ -2386,7 +2364,19 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
       return false;
     }
     if (period === 'monthly') return REAL_MONTHLY_ACTIVE && (metric === 'revenue' || metric === 'transactions');
-    return true; // daily/weekly are handled by their own existing real/sample logic
+    // ROUND 28: daily/weekly used to return a blanket true, which meant Margin % and
+    // Customers rendered their hardcoded 14-entry sample arrays against REAL date
+    // labels — indistinguishable from the real revenue series, and the exact failure
+    // the honest-placeholder rule exists to prevent. Revenue/Transactions/Avg Ticket
+    // are overwritten with real values by __refreshDailyPerformance; Margin and
+    // Customers only became available in the sync from Round 23 onward, so they are
+    // gated on their own flags and show a dash until that history accumulates.
+    if (period === 'daily' || period === 'weekly') {
+      if (metric === 'margin') return REAL_MARGIN_ACTIVE;
+      if (metric === 'customers') return REAL_CUSTOMERS_ACTIVE;
+      return true;
+    }
+    return true;
   }
 
   // Renders a period/value/vs-prior/vs-last-year table body, most-recent period first,
@@ -2456,6 +2446,12 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
   // buildRowsFromSeries's noYear option and renderCaption's null handling).
   var REAL_DAILY_ACTIVE = false;
   var REAL_WEEKLY_ACTIVE = false;
+  // ROUND 28: Margin % and Customers are real only once the sync supplies them per day.
+  // marginPct has been in dailyTotals for a while; customerCount arrived in Round 23.
+  // Until a given field is present, the metric shows an honest dash rather than the
+  // sample array it used to fall back on.
+  var REAL_MARGIN_ACTIVE = false;
+  var REAL_CUSTOMERS_ACTIVE = false;
   // Round 20/21: real Hourly (two independent widgets, each with its own comparison
   // basis — see each refresh function below) and real Monthly totals (up to 24
   // months / 2 years — Round 21 dropped Yearly entirely).
@@ -2482,11 +2478,19 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
       var slice = dailyTotals.slice(i - 7, i);
       var revenue = slice.reduce(function(a, d) { return a + d.revenue; }, 0);
       var transactionCount = slice.reduce(function(a, d) { return a + d.transactionCount; }, 0);
+      // ROUND 28: margin is re-derived from the bucket's own revenue and cost rather
+      // than averaging the daily percentages, which would weight a quiet Tuesday the
+      // same as a busy Saturday. Customers are summed, and left null unless every day
+      // in the bucket reported a count.
+      var cost = slice.reduce(function(a, d) { return a + (d.cost || 0); }, 0);
+      var allHaveCustomers = slice.every(function(d) { return typeof d.customerCount === 'number'; });
       buckets.unshift({
         endDate: slice[slice.length - 1].date,
         revenue: revenue,
         transactionCount: transactionCount,
         avgTicket: transactionCount > 0 ? revenue / transactionCount : 0,
+        marginPct: revenue > 0 ? ((revenue - cost) / revenue) * 100 : null,
+        customerCount: allHaveCustomers ? slice.reduce(function(a, d) { return a + d.customerCount; }, 0) : null,
       });
       i -= 7;
     }
@@ -2505,6 +2509,31 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
     METRIC_DATA.revenue.values.daily = recent.map(function(d) { return d.revenue; });
     METRIC_DATA.transactions.values.daily = recent.map(function(d) { return d.transactionCount; });
     METRIC_DATA.avgTicket.values.daily = recent.map(function(d) { return d.avgTicket; });
+
+    // ROUND 28: Margin % and Customers are real whenever the sync actually supplies
+    // them. Both are computed per day in sync-lightspeed.js (marginPct from SaleLine
+    // cost vs. revenue; customerCount from the Customer relation, added Round 23) and
+    // were simply never read here — the widget kept showing its sample arrays instead.
+    // A field is only treated as real if EVERY day in the window carries it, so a
+    // partially-backfilled history shows an honest dash rather than a series with
+    // silent zeroes where older days have no value.
+    var marginVals = recent.map(function(d) { return d.marginPct; });
+    REAL_MARGIN_ACTIVE = marginVals.every(function(v) { return typeof v === 'number' && isFinite(v); });
+    if (REAL_MARGIN_ACTIVE) {
+      METRIC_DATA.margin.values.daily = marginVals;
+      var lastM = marginVals[marginVals.length - 1];
+      var prevM = marginVals[marginVals.length - 2];
+      METRIC_DATA.margin.deltas.daily = { prev: pctChange(lastM, prevM) || 0, year: null };
+    }
+
+    var custVals = recent.map(function(d) { return d.customerCount; });
+    REAL_CUSTOMERS_ACTIVE = custVals.every(function(v) { return typeof v === 'number' && isFinite(v); });
+    if (REAL_CUSTOMERS_ACTIVE) {
+      METRIC_DATA.customers.values.daily = custVals;
+      var lastC = custVals[custVals.length - 1];
+      var prevC = custVals[custVals.length - 2];
+      METRIC_DATA.customers.deltas.daily = { prev: pctChange(lastC, prevC) || 0, year: null };
+    }
 
     var last = recent[recent.length - 1];
     var prev = recent[recent.length - 2];
@@ -2535,8 +2564,28 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
       METRIC_DATA.transactions.deltas.weekly = { prev: pctChange(lastW.transactionCount, prevW.transactionCount) || 0, year: null };
       METRIC_DATA.avgTicket.deltas.weekly = { prev: pctChange(lastW.avgTicket, prevW.avgTicket) || 0, year: null };
 
+      // ROUND 28: same treatment as the daily grain — real weekly Margin/Customers
+      // where every day in every bucket supplies them, honest dash otherwise.
+      if (REAL_MARGIN_ACTIVE) {
+        var wMargin = weeks.map(function(w) { return w.marginPct; });
+        METRIC_DATA.margin.values.weekly = wMargin;
+        METRIC_DATA.margin.deltas.weekly = { prev: pctChange(wMargin[wMargin.length - 1], wMargin[wMargin.length - 2]) || 0, year: null };
+      }
+      if (REAL_CUSTOMERS_ACTIVE) {
+        var wCust = weeks.map(function(w) { return w.customerCount; });
+        METRIC_DATA.customers.values.weekly = wCust;
+        METRIC_DATA.customers.deltas.weekly = { prev: pctChange(wCust[wCust.length - 1], wCust[wCust.length - 2]) || 0, year: null };
+      }
+
       REAL_WEEKLY_ACTIVE = true;
     }
+
+    // ROUND 28: the Overview hero KPIs are computed from these same weekly buckets.
+    // They used to be built by an IIFE that ran at page load, before data.json had
+    // resolved, and never re-ran — so they showed sample figures permanently even on a
+    // perfectly healthy pipeline. Recomputing here is what makes them real.
+    window.__realDailyTotals = dailyTotals;
+    if (window.__refreshOverviewHeroKpis) window.__refreshOverviewHeroKpis();
 
     if (window.__rerenderPeriodWidgets) window.__rerenderPeriodWidgets();
   };
@@ -2860,74 +2909,98 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
 
   // ---- Category Performance data (used by the Overview hero's secondary stats row
   // below, and by the dormant initCategoryPerformanceWidget further down) ----
-  var CATEGORY_PERFORMANCE_DATA = {
-    '4wk': [
-      { name: 'Food', value: 84200, deltaPrior: 4.8, deltaYear: 12.9 },
-      { name: 'Treats', value: 39800, deltaPrior: 5.6, deltaYear: 19.8 },
-      { name: 'Supplements', value: 27100, deltaPrior: -1.4, deltaYear: 4.2 },
-      { name: 'Toys', value: 21300, deltaPrior: 7.2, deltaYear: 23.1 },
-      { name: 'Grooming & Supplies', value: 17900, deltaPrior: 2.0, deltaYear: 7.8 }
-    ],
-    '12wk': [
-      { name: 'Food', value: 252000, deltaPrior: 3.6, deltaYear: 12.1 },
-      { name: 'Treats', value: 118000, deltaPrior: 4.4, deltaYear: 18.4 },
-      { name: 'Supplements', value: 81500, deltaPrior: -0.8, deltaYear: 4.9 },
-      { name: 'Toys', value: 63200, deltaPrior: 5.9, deltaYear: 21.6 },
-      { name: 'Grooming & Supplies', value: 53100, deltaPrior: 1.6, deltaYear: 8.3 }
-    ],
-    '52wk': [
-      { name: 'Food', value: 968000, deltaPrior: 2.1, deltaYear: 11.2 },
-      { name: 'Treats', value: 452000, deltaPrior: 3.4, deltaYear: 14.6 },
-      { name: 'Supplements', value: 318000, deltaPrior: -0.6, deltaYear: 3.8 },
-      { name: 'Toys', value: 241000, deltaPrior: 4.0, deltaYear: 16.4 },
-      { name: 'Grooming & Supplies', value: 198000, deltaPrior: 1.2, deltaYear: 5.1 }
-    ]
-  };
+  // ROUND 28: was a hardcoded three-window table of category names, revenue, growth and
+  // vs-last-year figures — none of it from data.json. Emptied. The widget it fed has no
+  // markup in the document anyway (initCategoryPerformanceWidget below finds no root and
+  // returns), and the Overview hero's Top Category tile now reads the REAL category
+  // aggregation that renderReport() computes into window.__realCategoryData.
+  var CATEGORY_PERFORMANCE_DATA = { '4wk': [], '12wk': [], '52wk': [] };
 
   // ---- Sales / Overview tab: main KPI hero, last 4 completed sample weeks ----
-  (function initSalesOverviewKpis() {
+  // ROUND 28: was an IIFE reading the SAMPLE weekly arrays at page load. data.json
+  // resolves asynchronously afterwards, so every one of these tiles kept its sample
+  // value for the life of the page even once real data arrived. It is now a named
+  // function called again from __refreshDailyPerformance once real weekly buckets
+  // exist, and every tile is gated: real figure if the data supports it, honest dash
+  // if not. Nothing here falls back to a sample.
+  window.__refreshOverviewHeroKpis = function() {
     var totalSalesEl = document.getElementById('ov-total-sales');
     if (!totalSalesEl) return;
+
+    var DASH = '\u2014';
+    function setText(id, value) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = value;
+    }
+    function setHtml(id, value) {
+      var el = document.getElementById(id);
+      if (el) el.innerHTML = value;
+    }
+
+    // Without real weekly buckets there is nothing honest to show.
+    if (!REAL_WEEKLY_ACTIVE) {
+      ['ov-total-sales', 'ov-sales-growth', 'ov-avg-transaction', 'ov-new-customers-wk',
+       'ov-avg-daily-sales', 'ov-txn-per-wk', 'ov-busiest-day', 'ov-top-category']
+        .forEach(function(id) { setText(id, DASH); });
+      return;
+    }
+
     var revWeekly = METRIC_DATA.revenue.values.weekly;
     var txnWeekly = METRIC_DATA.transactions.values.weekly;
     var last4Rev = revWeekly.slice(-4);
-    var prior4Rev = revWeekly.slice(-8, -4);
     var last4Txn = txnWeekly.slice(-4);
     var last4RevSum = last4Rev.reduce(function(a, b) { return a + b; }, 0);
-    var prior4RevSum = prior4Rev.reduce(function(a, b) { return a + b; }, 0);
     var last4TxnSum = last4Txn.reduce(function(a, b) { return a + b; }, 0);
-    var growthPct = prior4RevSum > 0 ? pctChange(last4RevSum, prior4RevSum) : 0;
-    var avgTxn = last4TxnSum > 0 ? last4RevSum / last4TxnSum : 0;
-    // Weekly new-customer counts aren't tracked historically yet (data.json only carries
-    // today's split), so this stays sample until that history accumulates.
-    var NEW_CUSTOMERS_WEEKLY_SAMPLE = [204, 198, 226, 236];
-    var newCustAvg = NEW_CUSTOMERS_WEEKLY_SAMPLE.reduce(function(a, b) { return a + b; }, 0) / NEW_CUSTOMERS_WEEKLY_SAMPLE.length;
 
-    totalSalesEl.textContent = fmtCurrency(last4RevSum);
-    var growthEl = document.getElementById('ov-sales-growth');
-    if (growthEl) growthEl.innerHTML = trendCellHtml(growthPct);
-    var avgTxnEl = document.getElementById('ov-avg-transaction');
-    if (avgTxnEl) avgTxnEl.textContent = fmtCurrencyPrecise(avgTxn);
-    var newCustEl = document.getElementById('ov-new-customers-wk');
-    if (newCustEl) newCustEl.textContent = fmtNumber(newCustAvg);
+    setText('ov-total-sales', fmtCurrency(last4RevSum));
+    setText('ov-avg-transaction', last4TxnSum > 0 ? fmtCurrencyPrecise(last4RevSum / last4TxnSum) : DASH);
+    setText('ov-avg-daily-sales', fmtCurrency(last4RevSum / (last4Rev.length * 7)));
+    setText('ov-txn-per-wk', fmtNumber(last4TxnSum / last4Txn.length));
 
-    // Secondary stats row (below the hero): a few more Last-4-Weeks numbers that
-    // complement the hero KPIs above without repeating them. Busiest Day stays a labeled
-    // sample constant (no real day-of-week breakdown exists yet); the other three derive
-    // from data already computed here or defined elsewhere on this page.
-    var BUSIEST_DAY_SAMPLE = 'Saturday';
-    var avgDailySalesEl = document.getElementById('ov-avg-daily-sales');
-    if (avgDailySalesEl) avgDailySalesEl.textContent = fmtCurrency(last4RevSum / 28);
-    var txnPerWkEl = document.getElementById('ov-txn-per-wk');
-    if (txnPerWkEl) txnPerWkEl.textContent = fmtNumber(last4TxnSum / 4);
-    var busiestDayEl = document.getElementById('ov-busiest-day');
-    if (busiestDayEl) busiestDayEl.textContent = BUSIEST_DAY_SAMPLE;
-    var topCategoryEl = document.getElementById('ov-top-category');
-    if (topCategoryEl) {
-      var topCat = (CATEGORY_PERFORMANCE_DATA['4wk'] || [])[0];
-      topCategoryEl.textContent = topCat ? topCat.name : '—';
+    // Growth needs a full prior 4 weeks to compare against — 8 buckets in total.
+    // With fewer, there is no comparison basis, so it stays a dash.
+    if (revWeekly.length >= 8) {
+      var prior4RevSum = revWeekly.slice(-8, -4).reduce(function(a, b) { return a + b; }, 0);
+      setHtml('ov-sales-growth', prior4RevSum > 0 ? trendCellHtml(pctChange(last4RevSum, prior4RevSum)) : DASH);
+    } else {
+      setText('ov-sales-growth', DASH);
     }
-  })();
+
+    // New customers per week: real only once the sync supplies per-day counts.
+    var daily = window.__realDailyTotals || [];
+    var recent28 = daily.slice(-28);
+    if (recent28.length === 28 && recent28.every(function(d) { return typeof d.newCustomerCount === 'number'; })) {
+      var newSum = recent28.reduce(function(a, d) { return a + d.newCustomerCount; }, 0);
+      setText('ov-new-customers-wk', fmtNumber(newSum / 4));
+    } else {
+      setText('ov-new-customers-wk', DASH);
+    }
+
+    // Busiest day was the hardcoded string 'Saturday'. It is now derived from the real
+    // trailing history by summing revenue per weekday, and only shown when there is
+    // enough history for the answer to mean anything.
+    if (recent28.length >= 14) {
+      var DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      var byDow = [0, 0, 0, 0, 0, 0, 0];
+      recent28.forEach(function(d) {
+        byDow[new Date(d.date + 'T12:00:00Z').getUTCDay()] += d.revenue;
+      });
+      var best = 0;
+      for (var i = 1; i < 7; i++) { if (byDow[i] > byDow[best]) best = i; }
+      setText('ov-busiest-day', byDow[best] > 0 ? DAY_NAMES[best] : DASH);
+    } else {
+      setText('ov-busiest-day', DASH);
+    }
+
+    // Top category comes from the real catalog aggregation that renderReport() already
+    // computes (window.__realCategoryData) instead of the hardcoded sample table.
+    var cats = window.__realCategoryData;
+    setText('ov-top-category', (Array.isArray(cats) && cats.length && cats[0].name) ? cats[0].name : DASH);
+  };
+
+  // Run once at load so the tiles show dashes rather than stale markup, then again
+  // from __refreshDailyPerformance once real data lands.
+  window.__refreshOverviewHeroKpis();
 
   // ---- Category Performance (Overview tab): categories on the x-axis instead of time,
   // toggled across a 4/12/52-week trailing window (CATEGORY_PERFORMANCE_DATA itself is
@@ -3196,17 +3269,22 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
   }
   initTopSellersWidget();
 
-  // Products / Product Performance: one filterable table that toggles between category,
-  // brand, and product views, fully sample (scaled from TOP_SELLERS_PRODUCTS' trailing
-  // weekly averages — the same source Top Sellers uses, so the numbers stay internally
-  // consistent). The growth-window dropdown picks how far back "Units Growth" / "Growth
-  // Trend" look; 52wk reuses each product's own stored trend as-is (it's already a
-  // 12-month figure), shorter windows amplify it a bit (shorter windows read noisier in
-  // real data) plus a small per-row wave so rows don't all move in lockstep.
+  // ROUND 28: this used to be { '4wk': scale 2.3, '12wk': scale 1.6, '52wk': scale 1.0 }.
+  // The sync computes exactly ONE growth figure per item — last 4 weeks vs. the prior 4
+  // weeks (see computeProductStats in sync-lightspeed.js). The frontend then multiplied
+  // that single number by up to 2.3x, added a per-row wave so rows wouldn't move in
+  // lockstep, and labelled the result as three different time windows — one of them
+  // annual. Those numbers were shaped to look plausible, not measured.
+  //
+  // Now: the 4-week window shows the real figure unmodified. The 12- and 52-week windows
+  // show an honest dash, because the data to compute them does not exist yet — it needs
+  // 168 and 728 days of per-item history respectively, and the rolling file keeps ~84.
+  // `weeks` is still used to scale period SALES totals, which is separately flagged
+  // below as an extrapolation.
   var GROWTH_WINDOW_META = {
-    '4wk':  { weeks: 4,  scale: 2.3 },
-    '12wk': { weeks: 12, scale: 1.6 },
-    '52wk': { weeks: 52, scale: 1.0 }
+    '4wk':  { weeks: 4,  realGrowth: true },
+    '12wk': { weeks: 12, realGrowth: false },
+    '52wk': { weeks: 52, realGrowth: false }
   };
   (function initProductPerformanceWidget() {
     var root = document.getElementById('product-performance-widget');
@@ -3269,16 +3347,22 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
         g.unitsTrendW += p.unitsTrend * p.avgSalesWk;
         g.salesTrendW += p.salesTrend * p.avgSalesWk;
       });
-      return Object.keys(groups).map(function(k, i) {
+      return Object.keys(groups).map(function(k) {
         var g = groups[k];
         var baseUnits = g.salesWk > 0 ? g.unitsTrendW / g.salesWk : 0;
         var baseSales = g.salesWk > 0 ? g.salesTrendW / g.salesWk : 0;
         return {
           name: g.name,
+          // ROUND 28: still a weekly average projected across the window, NOT a real
+          // period total — the sync would have to emit per-window sums for that. Kept
+          // (rather than dashed) because it is a genuine measured rate, but it cannot
+          // show a slow month. Flagged in the column header.
           sales: g.salesWk * gw.weeks,
           units: g.unitsWk * gw.weeks,
-          unitsGrowth: baseUnits * gw.scale + YEAR_WAVE[i % YEAR_WAVE.length] * 0.3,
-          growthTrend: baseSales * gw.scale + YEAR_WAVE[(i + 3) % YEAR_WAVE.length] * 0.3
+          // Real 4wk-over-4wk figure, unmodified. null (renders a dash) on the longer
+          // windows, where the underlying history does not exist yet.
+          unitsGrowth: gw.realGrowth ? baseUnits : null,
+          growthTrend: gw.realGrowth ? baseSales : null
         };
       });
     }
@@ -3302,10 +3386,17 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
         el.textContent = text;
         el.classList.toggle('shk-val-compact', text.length > 9);
       }
-      setKpiValue(salesEl12mo, fmtCurrency(salesWkSum * 52));
-      if (growthEl12mo) growthEl12mo.innerHTML = trendCellHtml(baseSalesGrowth * GROWTH_WINDOW_META['52wk'].scale);
-      setKpiValue(salesEl12wk, fmtCurrency(salesWkSum * 12));
-      if (growthEl12wk) growthEl12wk.innerHTML = trendCellHtml(baseSalesGrowth * GROWTH_WINDOW_META['12wk'].scale);
+      // ROUND 28: these four tiles were "salesWkSum x 52" and "x 12" — a weekly average
+      // from a ~12-week window projected out to a year, presented as "Sales - Last 12
+      // Mo." That is not a 12-month total and cannot become one without a deeper
+      // historical pull. The growth tiles were the same single 4-week figure rescaled.
+      // All four now show honest dashes, and the hero has been relabelled to the window
+      // that IS real: last 4 weeks.
+      var DASH = '\u2014';
+      setKpiValue(salesEl12mo, salesWkSum > 0 ? fmtCurrency(salesWkSum * 4) : DASH);
+      if (growthEl12mo) growthEl12mo.innerHTML = isFinite(baseSalesGrowth) && salesWkSum > 0 ? trendCellHtml(baseSalesGrowth) : DASH;
+      setKpiValue(salesEl12wk, salesWkSum > 0 ? fmtCurrency(salesWkSum) : DASH);
+      if (growthEl12wk) growthEl12wk.textContent = DASH;
     }
 
     function render() {
@@ -3317,13 +3408,13 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
         rows = groupBy(products, 'brand', gw);
       } else if (view === 'product') {
         nameTh.textContent = 'Product';
-        rows = products.map(function(p, i) {
+        rows = products.map(function(p) {
           return {
             name: p.name,
             sales: p.avgSalesWk * gw.weeks,
             units: p.avgUnitsWk * gw.weeks,
-            unitsGrowth: p.unitsTrend * gw.scale + YEAR_WAVE[i % YEAR_WAVE.length] * 0.3,
-            growthTrend: p.salesTrend * gw.scale + YEAR_WAVE[(i + 3) % YEAR_WAVE.length] * 0.3
+            unitsGrowth: gw.realGrowth ? p.unitsTrend : null,
+            growthTrend: gw.realGrowth ? p.salesTrend : null
           };
         });
       } else {
@@ -3594,7 +3685,7 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
 
   // Staff / Staffing-to-Sales Ratio by Shift: fully sample, a simple static table (no
   // dropdown needed &mdash; just the three daily shifts). Kept intact (see the
-  // display:none note on its markup above) even though it's hidden from this Basic-tier
+  // display:none note on its markup above) even though it's currently hidden from this
   // view, since the hero's "# of Staff" KPI still derives its headcount from it.
   var STAFF_SHIFT_RATIO = [
     { shift: 'Morning (9a–1p)', staffCount: 2, avgSales: 1850 },
@@ -3755,6 +3846,61 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
     var repeatPerWkEl = document.getElementById('customers-repeat-per-wk');
     if (repeatPerWkEl) repeatPerWkEl.textContent = fmtNumber(returningSum / 4);
   })();
+})();
+
+/* ===================================================================
+   ROUND 28: honest placeholders for widgets with no real data source
+   -------------------------------------------------------------------
+   Jason's instruction: "Put dashes in anything that doesn't have data."
+
+   The widgets listed below were rendering hardcoded sample arrays that
+   looked exactly like real output — the Round 19 failure mode. None of
+   them has a field in data.json today. Rather than delete the panels
+   (the layout and the sync spec both still want them), each keeps its
+   chrome and shows a labelled placeholder until the sync supplies the
+   data. See ROUND-28-SYNC-NEEDS in the handover notes for exactly what
+   each one requires.
+   =================================================================== */
+(function honestPlaceholders() {
+  var NEEDS = {
+    'slow-movers-widget':      'per-item days-since-last-sale from the sales history',
+    'new-items-widget':        'item createTime plus first-sale date per item',
+    'labor-cost-widget':       'a payroll or time-and-attendance source (not in Lightspeed R-Series)',
+    'staff-shift-ratio-widget':'a payroll or time-and-attendance source (not in Lightspeed R-Series)',
+    'customer-trend-widget':   'per-day customer counts across the full history window'
+  };
+
+  function placeholder(what) {
+    return '<div class="placeholder-card"><strong>Not wired to real data yet</strong>' +
+           'This panel needs ' + what + '. It is intentionally blank rather than showing ' +
+           'sample figures.</div>';
+  }
+
+  Object.keys(NEEDS).forEach(function(id) {
+    var root = document.getElementById(id);
+    if (!root) return;
+    // Keep the control bar (heading) so the page still reads correctly; replace
+    // everything below it.
+    var bar = root.querySelector('.control-bar');
+    root.innerHTML = (bar ? bar.outerHTML : '') + placeholder(NEEDS[id]);
+    // Any control left in the bar would no longer do anything.
+    root.querySelectorAll('.control-bar select, .control-bar button').forEach(function(el) {
+      el.disabled = true;
+      el.style.opacity = '0.4';
+      el.style.pointerEvents = 'none';
+    });
+  });
+
+  // Staff hero + Customers hero: every tile was derived from sample arrays.
+  ['staff-count','staff-wages','staff-wage-trend','staff-overtime','staff-avg-hours',
+   'staff-busiest-shift','staff-avg-sales','staff-labor-pct',
+   'customers-new','customers-returning','customers-total','customers-repeat-rate',
+   'customers-avg-spend','customers-new-per-day','customers-busiest-day',
+   'customers-repeat-per-wk']
+    .forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) { el.textContent = '\u2014'; el.classList.add('no-data-yet'); }
+    });
 })();
 
 /* ===================================================================
@@ -3930,6 +4076,26 @@ document.querySelectorAll('.nav-group:not(.locked) .nav-parent-btn').forEach(fun
   // Tables inside tabs that are built lazily won't exist at load, so pick up
   // any that appear later.
   window.addEventListener('load', enhanceAll);
+})();
+
+/* ROUND 28: the label thinning in renderBars() measures the container's width at draw
+   time. A chart drawn inside a hidden tab measures zero, and one drawn before the
+   sidebar settles measures the wrong width — in both cases the label count is computed
+   against a stale width and can overflow. Re-running the widgets on resize (debounced)
+   and shortly after load re-measures against the real width. */
+(function keepAxisLabelsFitted() {
+  var timer = null;
+  function refit() {
+    if (window.__rerenderPeriodWidgets) window.__rerenderPeriodWidgets();
+  }
+  window.addEventListener('resize', function() {
+    clearTimeout(timer);
+    timer = setTimeout(refit, 120);
+  });
+  window.addEventListener('load', function() { setTimeout(refit, 60); });
+  document.addEventListener('click', function(e) {
+    if (e.target.closest && e.target.closest('.tab-btn, .nav-parent-btn')) setTimeout(refit, 40);
+  });
 })();
 </script>
 </body>
